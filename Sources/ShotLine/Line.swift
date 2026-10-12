@@ -256,6 +256,19 @@ final class Line: ObservableObject {
         }
     }
 
+    /// Dragged into an app, which has its copy: the photo leaves the line,
+    /// and a capture moves on to the screenshots folder. It waits a moment
+    /// first, so the app has read the file before it moves. A photo being
+    /// edited stays, as with the timer.
+    func sent(_ id: UUID) {
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) { [weak self] in
+            guard let self, !self.held.contains(id),
+                  self.items.contains(where: { $0.id == id && !$0.falling }) else { return }
+            if self.isInInbox(id) { self.keep(id, quietly: true) }
+            self.drop(id, quietly: true)
+        }
+    }
+
     /// Put away after, from the menu bar: seconds before a capture moves on
     /// by itself and the line goes back up, or nil for never.
     nonisolated static let keepDelayChoices: [TimeInterval] = [15, 30, 180]

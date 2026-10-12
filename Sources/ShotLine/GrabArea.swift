@@ -39,6 +39,7 @@ struct GrabArea: NSViewRepresentable {
             line.prune()
         }
         view.onTrash = { line.trash(id) }
+        view.onSent = { line.sent(id) }
         view.onDiscard = { line.discard(id) }
         view.hasCheck = line.isInInbox(id)
         view.onKeep = { line.keep(id) }
@@ -90,6 +91,8 @@ final class GrabView: NSView, NSDraggingSource {
     var onDragStart: () -> Void = {}
     var onDragEnd: () -> Void = {}
     var onTrash: () -> Void = {}
+    /// Dropped on an app, which took a copy.
+    var onSent: () -> Void = {}
     var onDiscard: () -> Void = {}
     /// A capture in ShotLine's folder has a checkmark in the bottom right
     /// corner that moves it to the screenshots folder.
@@ -232,6 +235,8 @@ final class GrabView: NSView, NSDraggingSource {
         if operation.contains(.move) {
             let done = onDragEnd
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) { done() }
+        } else if operation.contains(.copy) {
+            onSent()
         }
     }
 
