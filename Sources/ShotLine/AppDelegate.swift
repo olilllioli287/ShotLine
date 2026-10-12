@@ -90,10 +90,17 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             self?.line.scroll(by: event.hasPreciseScrollingDeltas ? delta : delta * 12)
         }
         line.onFall = { [weak self] item in self?.fall(item) }
-        // A photo sent to an app: the line has done its job and goes back up.
+        // A photo sent to an app: with nothing left, the line has done its job
+        // and goes back up. With photos left it stays down for them, as after
+        // a capture, and goes up once the last one is gone.
         line.onSent = { [weak self] in
-            self?.pinned = false
-            self?.setRevealed(false)
+            guard let self else { return }
+            if self.line.liveCount == 0 {
+                self.pinned = false
+                self.setRevealed(false)
+            } else {
+                self.reveal(peekFor: Self.holdDuration)
+            }
         }
 
         line.$items
@@ -278,9 +285,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         // In inbox mode a capture moves on by itself after Line.keepDelay, so
         // the line stays down that long and the checkmark stays in reach.
         // Set to never, it stays down until it is put away.
-        if Self.peeksAtNew {
-            reveal(peekFor: Inbox.isEnabled ? (Line.keepDelay.map { $0 + 0.5 } ?? .infinity) : 2.5)
-        }
+        if Self.peeksAtNew { reveal(peekFor: Self.holdDuration) }
+    }
+
+    /// How long the line stays down for the photos on it.
+    private static var holdDuration: TimeInterval {
+        Inbox.isEnabled ? (Line.keepDelay.map { $0 + 0.5 } ?? .infinity) : 2.5
     }
 
     // MARK: The capture flying to the line
