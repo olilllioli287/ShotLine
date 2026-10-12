@@ -1,173 +1,95 @@
-<picture>
-  <source media="(prefers-color-scheme: dark)" srcset="docs/images/hero-dark.png">
-  <img src="docs/images/hero-light.png" alt="Tendedero. Screenshots, hung out to dry. Three screenshots in glass frames hang from a thin line under the macOS menu bar.">
-</picture>
+<p align="center">
+  <img src="docs/images/shotline-icon.png" width="128" height="128" alt="ShotLine 圖示：兩張截圖夾在曬衣繩上，右下角一個綠色勾勾">
+</p>
 
-<h3 align="center"><a href="https://tendedero.app/?lang=en">Try it in your browser at tendedero.app&nbsp;&rsaquo;</a></h3>
+<h1 align="center">ShotLine</h1>
 
 <p align="center">
-  Free and open source. For macOS 14 and later.
+  截圖先掛在螢幕上方的曬衣繩上，過一會兒自動收進你的截圖檔案夾。
   <br>
-  <a href="../../releases/latest">Download&nbsp;&rsaquo;</a>
-  &nbsp;&nbsp;
-  <a href="#build-from-source">Build from source&nbsp;&rsaquo;</a>
-  <br><br>
-  English&nbsp;·&nbsp;<a href="docs/i18n/README.es.md">Español</a>&nbsp;·&nbsp;<a href="docs/i18n/README.fr.md">Français</a>&nbsp;·&nbsp;<a href="docs/i18n/README.pt-BR.md">Português (Brasil)</a>&nbsp;·&nbsp;<a href="docs/i18n/README.ja.md">日本語</a>&nbsp;·&nbsp;<a href="docs/i18n/README.ko.md">한국어</a>&nbsp;·&nbsp;<a href="docs/i18n/README.zh-Hans.md">简体中文</a>
+  macOS 14 以上。改自 <a href="https://github.com/alejandrobujan/tendedero">Tendedero</a> 1.5.0，MIT 授權。
 </p>
 
 <br>
 
-## Out of sight. Within reach.
+## 跟原版 Tendedero 不一樣的地方
 
-Every screenshot you take hangs on a line just above your screen.
-Rest the pointer in the menu bar and it glides down. Move away and it's gone.
-
-<picture>
-  <source media="(prefers-color-scheme: dark)" srcset="docs/images/demo-dark.gif">
-  <img src="docs/images/demo-light.gif" alt="The pointer rests against the top edge, the line slides down with three screenshots swinging gently, a click copies one, and the line tucks away when the pointer leaves.">
-</picture>
-
-<br>
-<br>
-
-## A gesture for everything.
-
-<picture>
-  <source media="(prefers-color-scheme: dark)" srcset="docs/images/bento-dark.png">
-  <img src="docs/images/bento-light.png" alt="Click to copy. Hold to mark up. Drag to share. Let it go.">
-</picture>
+- **自動收進截圖檔案夾**：截圖掛上曬衣繩後，過一段時間會自動搬到 macOS 原本存截圖的檔案夾（例如 `~/Desktop/螢幕擷圖`），然後離開曬衣繩。原版會一直留在 App 自己的檔案夾裡，繩子滿了就丟進垃圾桶。
+- **右下角的勾勾**：滑鼠移到照片上，右下角會出現 ✓，按下去立刻搬走，不用等。右鍵選單也有「移到螢幕擷圖檔案夾」。
+- **自動收回時間可調整**：選單列的「自動收回」可以選 15 秒、30 秒、3 分鐘或永不收回，預設 15 秒。截圖後曬衣繩會一直放下來，直到照片搬走才收起，這段時間勾勾都按得到。
+- **編輯中的照片不會被搬走**：用「預覽」打開或用標示工具（Markup）編輯過的照片不會自動搬走，避免編到一半檔案不見、存不回去，編完按 ✓ 就好。滑鼠停在照片上、正在拖曳、右鍵選單開著、或「快速查看」開著時，計時也會等你。
+- **繩子滿了不會丟東西**：最舊的照片改成搬到截圖檔案夾，不再丟進垃圾桶。
+- **繁體中文**：加上繁體中文（台灣用語）翻譯，選單裡多了「使用說明…」。
+- **自己的名字和圖示**：依原作者的授權要求，改名為 ShotLine（bundle id `local.shotline.ShotLine`），換上藍綠色加綠勾勾的圖示，並拿掉指向 tendedero.app 的「檢查更新」。
 
 <br>
-<br>
 
-| | |
+## 操作方式
+
+| 操作 | 效果 |
 |:--|:--|
-| Click | Copy the image. |
-| Press and hold | Open it in Markup. |
-| Double click | Open it in Preview. |
-| Force click | Take a quick look. |
-| Drag into an app | Send a copy. It stays on the line. |
-| Drag into a folder | Keep it there. It leaves the line. |
-| Drag to the Trash, or click the cross | Let it go. |
-| Rest the pointer in the menu bar | Bring the line down on that screen. |
-| Click anything in the menu bar | Put it away. |
-| <kbd>⌃</kbd>&thinsp;<kbd>⌥</kbd>&thinsp;<kbd>T</kbd> | Show or hide the line. Change it under Shortcut in the menu bar. |
+| 點一下 | 拷貝圖片 |
+| 按住不放 | 用標示工具（Markup）編輯，錄影則是剪輯 |
+| 雙擊 | 用「預覽」打開 |
+| 用力按（觸控板） | 快速查看 |
+| 拖到 App 裡 | 放一份拷貝進去，照片留在繩上 |
+| 拖到檔案夾 | 檔案搬過去，照片離開繩子 |
+| 右下角 ✓ | 立刻搬到截圖檔案夾 |
+| 左上角 ✕，或拖到垃圾桶 | 丟掉 |
+| 滑鼠停在選單列 | 把曬衣繩放下來 |
+| <kbd>⌃</kbd>&thinsp;<kbd>⌥</kbd>&thinsp;<kbd>T</kbd> | 顯示或隱藏曬衣繩（可在選單列的「快速鍵」更改） |
 
 <br>
 
-## Your Desktop. Finally clear.
+## 怎麼運作
 
-Hand Tendedero your screenshots<sup>1</sup> and they skip the Desktop
-entirely. No floating thumbnail. No five-second wait. Each capture hangs
-the instant you take it, and only what you drag out is kept.
+第一次開啟時打開「接管截圖」（選單列裡也能切換），ShotLine 會把 macOS 的截圖存放位置暫時改到自己的檔案夾 `~/Library/Application Support/ShotLine/Screenshots`，並關掉右下角的浮動縮圖，所以截圖一按下就會掛上繩子。原本的設定會先記下來，結束 ShotLine 或關掉這個選項時自動還原。照片要搬去的「截圖檔案夾」就是這個記下來的位置，沒有設定過的話是桌面。
 
-Screen recordings hang there too, with a play button over them.
-Press and hold one to trim it.
-
-Same shortcuts. Same muscle memory. Just less mess.
+不連網、沒有帳號、沒有分析，所有東西都留在你的 Mac 上。
 
 <br>
 
-## Copied images too.
-
-Take a screenshot with <kbd>⌃</kbd> held, or copy an image in Preview, and it
-hangs on the line like any other. Turn on Hang copied images in the menu bar
-and the shirt fills in while it is on. Only images: anything copied along
-with text or a file, and anything a password manager marks as private, is
-left alone.
-
-<br>
-
-## Private by design.
-
-No account. No network. No analytics.
-Tendedero runs entirely on your Mac, and your screenshots never leave it.
-
-<br>
-
-## Tech Specs
-
-| | |
-|:--|:--|
-| **Compatibility** | macOS 14 Sonoma or later, on Apple silicon and Intel. Designed for macOS 27. |
-| **Size** | 1.7 MB |
-| **Languages** | English, Spanish, French, Portuguese (Brazil), Japanese, Korean, Chinese (Simplified), Turkish, Azerbaijani |
-| **Built with** | Swift, AppKit and SwiftUI |
-| **Network access** | None |
-| **Price** | Free |
-| **License** | MIT for the code. The name and icon are not included. |
-
-<br>
-
-## Install
-
-Download the disk image from the [latest release](../../releases/latest),
-open it and drag Tendedero to Applications. Or install it with Homebrew:
+## 從原始碼編譯
 
 ```sh
-brew install --cask alejandrobujan/tap/tendedero
-```
-
-Tendedero is signed with a Developer ID and notarized by Apple, so it opens
-like any other app.
-
-<br>
-
-## Build from source
-
-```sh
-git clone git@github.com:alejandrobujan/tendedero.git
-cd tendedero
+git clone https://github.com/olilllioli287/ShotLine.git
+cd ShotLine
 scripts/build-app.sh
-open build/Tendedero.app
+cp -R build/ShotLine.app /Applications/
+open /Applications/ShotLine.app
 ```
 
-Requires the Swift toolchain. Xcode is optional. With the Command Line Tools for macOS 27, the script falls back to the macOS 26 SDK they install alongside, because the new SDK needs a SwiftUI macro plugin only Xcode includes. Local builds are signed ad hoc,
-so macOS asks again for access to the Desktop after each rebuild.
+需要 Swift 工具鏈，Xcode 可有可無。本機編譯用的是臨時簽章（ad hoc），所以每次重新編譯後，macOS 可能會再問一次能不能存取桌面。
+
+改了翻譯之後，執行 `swift scripts/check-strings.swift` 檢查有沒有缺漏。翻譯檔在 `Sources/ShotLine/Resources`，每個語言一個 `.lproj` 檔案夾。
 
 <details>
-<summary>Inside the app</summary>
+<summary>程式檔案</summary>
 <br>
 
-| File | Role |
+| 檔案 | 負責 |
 |:--|:--|
-| `AppDelegate.swift` | Menu bar, shortcut, revealing and tucking away the line |
-| `LinePanel.swift` | The transparent strip along the top of the screen |
-| `LineView.swift` | The line and where each photo hangs |
-| `PeggedView.swift` | One photo: glass frame, clip, swing and breeze |
-| `GrabArea.swift` | Click, long press, drag and drop |
-| `ScreenshotWatcher.swift` | Notices new screenshots |
-| `ClipboardWatcher.swift` | Notices images copied to the clipboard |
-| `Inbox.swift` | Takes over screenshot settings and puts them back |
-| `Markup.swift` | Opens the system Markup editor and saves the result |
-| `Trim.swift` | Trims a screen recording and saves the result |
-| `FullScreen.swift` | Knows when to stay hidden |
-| `Line.swift` | What is hanging, and what you can do with it |
+| `AppDelegate.swift` | 選單列、快速鍵、曬衣繩的放下與收起 |
+| `Line.swift` | 繩上掛著什麼、可以對它們做什麼，以及自動收進截圖檔案夾的計時 |
+| `PeggedView.swift` | 單張照片：玻璃框、夾子、✕ 和 ✓ |
+| `GrabArea.swift` | 點擊、長按、拖放、角落按鈕 |
+| `Inbox.swift` | 接管截圖設定並在結束時還原，記住原本的截圖檔案夾 |
+| `Guide.swift` | 使用說明視窗 |
+| `ScreenshotWatcher.swift` | 偵測新截圖 |
+| `ClipboardWatcher.swift` | 偵測拷貝的圖片 |
+| `Markup.swift` / `Trim.swift` | 編輯圖片、剪輯錄影並存回原檔 |
+| `QuickLook.swift` | 快速查看 |
+| `LinePanel.swift` / `LineView.swift` | 螢幕上方那條透明的長條和曬衣繩 |
+| `FullScreen.swift` | 全螢幕 App 時自動隱藏 |
 
-Every image here, the icon included, is drawn in code by
-`scripts/make-icon.swift` and `scripts/make-readme-art.swift`.
-`scripts/make-dmg.sh` builds the disk image for releases.
-
-Translations live in `Sources/Tendedero/Resources`, one `.lproj` folder per
-language. `swift scripts/check-strings.swift` checks that none is missing.
+圖示由 `scripts/make-icon.swift` 用程式畫出來。
 
 </details>
 
 <br>
 
----
+## 授權與致謝
 
-<sub>
-1. On first launch, Tendedero offers to handle your screenshots. If you accept, it turns off the floating thumbnail and saves new screenshots to its own folder, two settings also found under Options in Cmd+Shift+5. Your previous settings are saved and restored when Tendedero quits or the option is turned off from the menu bar. Tendedero hides automatically while an app is in full screen.
-</sub>
+ShotLine 改自 [Alejandro Buján](https://alejandrobujan.com) 的 [Tendedero](https://github.com/alejandrobujan/tendedero) 1.5.0。原始程式碼採 MIT 授權，原作者的版權聲明保留在 [LICENSE](LICENSE)。Tendedero 的名稱和圖示不在授權範圍內，所以這個改版用的是自己的名字和圖示。
 
-<br>
-<br>
-
-<p align="center">
-  <img src="docs/images/icon.png" width="64" height="64" alt="">
-  <br>
-  <sub>The code is MIT licensed. The Tendedero name and icon are not, so forks need their own. See <a href="LICENSE">LICENSE</a>.</sub>
-  <br>
-  <sub>Designed and built by <a href="https://alejandrobujan.com">Alejandro Buján</a>.</sub>
-</p>
+`docs/` 裡的其他圖片和 `docs/i18n` 的多語說明是原版 Tendedero 的，保留下來供參考，內容描述的是原版。
