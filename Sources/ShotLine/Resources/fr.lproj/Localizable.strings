@@ -1,8 +1,8 @@
 /* French. */
 
 /* AppDelegate */
-"Let Tendedero handle your screenshots?" = "Laisser Tendedero gérer vos captures d’écran ?";
-"Screenshots will hang on the line the instant you take them, without the floating thumbnail, and will not pile up on your Desktop. Drag one to a folder to keep it, or discard it with the cross. You can turn this off from the menu bar, and your settings come back when Tendedero quits." = "Les captures s’accrocheront à la corde dès que vous les prendrez, sans la vignette flottante, et ne s’entasseront plus sur votre bureau. Faites-en glisser une dans un dossier pour la garder, ou jetez-la avec la croix. Vous pouvez désactiver cette option depuis la barre des menus, et vos réglages reviennent quand vous quittez Tendedero.";
+"Let ShotLine handle your screenshots?" = "Laisser ShotLine gérer vos captures d’écran ?";
+"Screenshots will hang on the line the instant you take them, without the floating thumbnail, and will not pile up on your Desktop. Drag one to a folder to keep it, or discard it with the cross. You can turn this off from the menu bar, and your settings come back when ShotLine quits." = "Les captures s’accrocheront à la corde dès que vous les prendrez, sans la vignette flottante, et ne s’entasseront plus sur votre bureau. Faites-en glisser une dans un dossier pour la garder, ou jetez-la avec la croix. Vous pouvez désactiver cette option depuis la barre des menus, et vos réglages reviennent quand vous quittez ShotLine.";
 "Turn on" = "Activer";
 "Not now" = "Plus tard";
 "Hide line" = "Masquer la corde";
@@ -13,13 +13,18 @@
 "Open screenshots folder" = "Ouvrir le dossier des captures";
 "Sounds" = "Sons";
 "Open at login" = "Ouvrir à l’ouverture de session";
-"Check for Updates…" = "Rechercher les mises à jour…";
-"Quit Tendedero" = "Quitter Tendedero";
+"User Guide…" = "Guide d’utilisation…";
+"User Guide" = "Guide d’utilisation";
+"Quit ShotLine" = "Quitter ShotLine";
 "Could not change the login setting" = "Impossible de modifier l’ouverture à la connexion";
-"Move Tendedero to the Applications folder and try again." = "Placez Tendedero dans le dossier Applications, puis réessayez.";
+"Move ShotLine to the Applications folder and try again." = "Placez ShotLine dans le dossier Applications, puis réessayez.";
 "Keep on line" = "Garder sur la corde";
 "As many as fit" = "Autant qu’il en tient";
 "%d photos" = "%d photos";
+"Put away after" = "Ranger après";
+"%d seconds" = "%d secondes";
+"%d minutes" = "%d minutes";
+"Never" = "Jamais";
 "Also watch folders" = "Surveiller aussi des dossiers";
 "Add Folder…" = "Ajouter un dossier…";
 "Stop Watching" = "Ne plus surveiller";
@@ -42,7 +47,7 @@
 "Over full screen apps" = "Au-dessus des apps en plein écran";
 "Hang copied images" = "Accrocher les images copiées";
 "Images you copy hang on the line too" = "Les images copiées s’accrochent aussi à la corde";
-"Tendedero, hanging copied images" = "Tendedero, accroche les images copiées";
+"ShotLine, hanging copied images" = "ShotLine, accroche les images copiées";
 
 /* GrabArea */
 "Copy" = "Copier";
@@ -50,7 +55,7 @@
 "Quick Look" = "Coup d’œil";
 "Markup" = "Annotation";
 "Show in Finder" = "Afficher dans le Finder";
-"Save to Desktop" = "Enregistrer sur le bureau";
+"Move to Screenshots Folder" = "Déplacer vers le dossier des captures";
 "Discard" = "Jeter";
 "Take down" = "Décrocher";
 "Move to Trash" = "Placer dans la corbeille";

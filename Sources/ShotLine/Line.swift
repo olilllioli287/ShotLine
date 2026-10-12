@@ -3,7 +3,7 @@ import AVFoundation
 import Combine
 import os
 
-let log = Logger(subsystem: "app.tendedero.Tendedero", category: "line")
+let log = Logger(subsystem: "local.shotline.ShotLine", category: "line")
 
 /// One screenshot hanging on the line.
 struct Pegged: Identifiable, Equatable {
@@ -16,7 +16,7 @@ struct Pegged: Identifiable, Equatable {
     /// Still flying in from where it was captured; the card waits hidden.
     var flying = false
     /// A screen recording rather than a screenshot.
-    var isRecording: Bool { Tendedero.isRecording(url) }
+    var isRecording: Bool { ShotLine.isRecording(url) }
 
     static func == (a: Pegged, b: Pegged) -> Bool {
         a.id == b.id && a.falling == b.falling && a.flying == b.flying && a.thumb === b.thumb
@@ -91,6 +91,7 @@ final class Line: ObservableObject {
         }
         save()
         if !quietly { play("Tink", volume: 0.35) }
+        if isInInbox(item.id) { scheduleKeep(item.id) }
         return item.id
     }
 
@@ -129,7 +130,7 @@ final class Line: ObservableObject {
     }
 
     /// Takes down everything on one side of a photo. Each one goes the way
-    /// of its own corner button: to the Trash from Tendedero's folder, and
+    /// of its own corner button: to the Trash from ShotLine's folder, and
     /// only off the line from anywhere else.
     func takeDown(_ id: UUID, toTheLeft: Bool) {
         takeDown(neighbours(of: id, toTheLeft: toTheLeft))
@@ -171,6 +172,7 @@ final class Line: ObservableObject {
 
     func open(_ id: UUID) {
         guard let item = items.first(where: { $0.id == id }) else { return }
+        held.insert(id)
         NSWorkspace.shared.open(item.url)
     }
 
@@ -197,7 +199,7 @@ final class Line: ObservableObject {
         contentsOfFile: "/System/Library/Components/CoreAudio.component/Contents/SharedSupport/SystemSounds/dock/drag to trash.aif",
         byReference: true)
 
-    /// Whether the file lives in Tendedero's own folder. Those are discarded
+    /// Whether the file lives in ShotLine's own folder. Those are discarded
     /// to the Trash, or the folder would fill up with forgotten screenshots.
     /// Files anywhere else, like the Desktop, stay where they are.
     func isInInbox(_ id: UUID) -> Bool {
@@ -211,7 +213,7 @@ final class Line: ObservableObject {
     }
 
     /// The oldest photo falling off a full line. Like the cross, a file from
-    /// Tendedero's folder goes to the Trash, or nothing would ever take it out
+    /// ShotLine's folder goes to the Trash, or nothing would ever take it out
     /// of that folder. If the Trash refuses it, it still leaves the line.
     /// Moves along a line that holds more than fit, from a scroll gesture.
     func scroll(by delta: CGFloat) {
@@ -229,24 +231,83 @@ final class Line: ObservableObject {
         scroll = 0
     }
 
+    /// A capture in ShotLine's folder is kept rather than trashed, so a full
+    /// line never throws away a screenshot, edited or not.
     private func letGo(_ id: UUID) {
-        if isInInbox(id), trash(id, quietly: true) { return }
+        if isInInbox(id) { keep(id, quietly: true) }
         drop(id, quietly: true)
     }
 
-    /// Inbox mode: keep a screenshot by moving it to the Desktop.
-    func saveToDesktop(_ id: UUID) {
-        guard let item = items.first(where: { $0.id == id }) else { return }
-        let desktop = FileManager.default.homeDirectoryForCurrentUser.appendingPathComponent("Desktop")
-        let target = uniqueURL(in: desktop, for: item.url.lastPathComponent)
+    /// Inbox mode: keep a capture by moving it to the screenshots folder
+    /// macOS used before. The corner checkmark does it at once, and every
+    /// capture does it by itself `keepDelay` seconds after it was hung.
+    func keep(_ id: UUID, quietly: Bool = false) {
+        guard let item = items.first(where: { $0.id == id && !$0.falling }) else { return }
+        let folder = Inbox.keepFolder
         do {
+            try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
+            let target = uniqueURL(in: folder, for: item.url.lastPathComponent)
             try FileManager.default.moveItem(at: item.url, to: target)
+            log.notice("Kept \(item.url.lastPathComponent, privacy: .public) in \(folder.path, privacy: .public)")
             drop(id, quietly: true)
         } catch {
-            log.error("Could not save to Desktop: \(error.localizedDescription, privacy: .public)")
-            NSSound.beep()
+            log.error("Could not keep \(item.url.lastPathComponent, privacy: .public): \(error.localizedDescription, privacy: .public)")
+            if !quietly { NSSound.beep() }
         }
     }
+
+    /// Put away after, from the menu bar: seconds before a capture moves on
+    /// by itself and the line goes back up, or nil for never.
+    nonisolated static let keepDelayChoices: [TimeInterval] = [15, 30, 180]
+    nonisolated static var keepDelay: TimeInterval? {
+        get {
+            let defaults = UserDefaults.standard
+            guard defaults.object(forKey: "keepDelay") != nil else { return 15 }
+            let n = defaults.double(forKey: "keepDelay")
+            return keepDelayChoices.contains(n) ? n : nil
+        }
+        set { UserDefaults.standard.set(newValue ?? 0, forKey: "keepDelay") }
+    }
+
+    /// The photo the pointer is over. Not published: only the timer reads it.
+    var hoveredID: UUID?
+
+    /// Bumped when the delay changes, so timers set with the old one stop.
+    private var keepGeneration = 0
+
+    /// After a change of delay, every waiting capture starts over with it.
+    func restartKeepTimers() {
+        keepGeneration += 1
+        for item in items where !item.falling && isInInbox(item.id) { scheduleKeep(item.id) }
+    }
+
+    /// Moves a capture from ShotLine's folder once its time is up. While it
+    /// is being held, dragged, edited or looked at, it waits a little longer.
+    private func scheduleKeep(_ id: UUID, after delay: TimeInterval? = Line.keepDelay) {
+        guard let delay else { return }
+        let generation = keepGeneration
+        DispatchQueue.main.asyncAfter(deadline: .now() + delay) { [weak self] in
+            guard let self, generation == self.keepGeneration, !self.held.contains(id), self.isInInbox(id),
+                  let item = self.items.first(where: { $0.id == id && !$0.falling }) else { return }
+            if self.isBusy(item) {
+                self.scheduleKeep(id, after: 2)
+            } else {
+                self.keep(id, quietly: true)
+            }
+        }
+    }
+
+    private func isBusy(_ item: Pegged) -> Bool {
+        draggingID == item.id || pressedID == item.id || hoveredID == item.id
+            || GrabView.isDragging || GrabView.isShowingMenu
+            || Markup.shared.isEditing(item.url) || Trim.shared.isEditing(item.url)
+            || QuickLook.shared.isVisible
+    }
+
+    /// Photos opened in another app or in Markup. Moving the file would pull
+    /// it out from under the editor and the edit could not be saved, so these
+    /// stay until the checkmark or the menu moves them.
+    private var held: Set<UUID> = []
 
     private func uniqueURL(in folder: URL, for name: String) -> URL {
         let base = (name as NSString).deletingPathExtension
@@ -264,6 +325,7 @@ final class Line: ObservableObject {
     /// not edit video, so a recording opens in the trimming editor instead.
     func markup(_ id: UUID) {
         guard let item = items.first(where: { $0.id == id }) else { return }
+        held.insert(id)
         if item.isRecording {
             Trim.shared.edit(item.url, size: item.thumb.size)
         } else {
@@ -326,6 +388,8 @@ final class Line: ObservableObject {
             guard !items.contains(where: { $0.url == url }), let thumb = makeThumbnail(url) else { continue }
             items.append(Pegged(url: url, thumb: thumb))
         }
+        // Captures left in ShotLine's folder at the last quit get their time too.
+        for item in items where isInInbox(item.id) { scheduleKeep(item.id) }
     }
 
     // MARK: Helpers

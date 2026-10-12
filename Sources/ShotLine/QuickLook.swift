@@ -26,6 +26,12 @@ final class QuickLook: NSObject, QLPreviewPanelDataSource, QLPreviewPanelDelegat
         panel.makeKeyAndOrderFront(nil)
     }
 
+    /// Whether the Quick Look window is open. Its markup edits the file in
+    /// place, so nothing on the line moves meanwhile.
+    var isVisible: Bool {
+        QLPreviewPanel.sharedPreviewPanelExists() && QLPreviewPanel.shared()?.isVisible == true
+    }
+
     func take(_ panel: QLPreviewPanel) {
         panel.dataSource = self
         panel.delegate = self

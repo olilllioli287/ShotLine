@@ -1,11 +1,11 @@
 import Foundation
 
-/// Inbox mode: Tendedero takes over where screenshots go.
+/// Inbox mode: ShotLine takes over where screenshots go.
 ///
 /// It changes the macOS screenshot settings in the Options menu of
 /// Cmd+Shift+5: the floating thumbnail is turned off, so the file is written
 /// at once instead of five seconds later, and captures are saved as files in
-/// Tendedero's own folder, so the Desktop only gets what you keep. Saving to
+/// ShotLine's own folder, so the Desktop only gets what you keep. Saving to
 /// the clipboard or Preview would leave nothing to hang, and a click on the
 /// line copies anyway.
 /// Screen recordings go there too, and hang on the line like screenshots.
@@ -36,8 +36,20 @@ enum Inbox {
 
     static let folder: URL = {
         let base = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
-        return base.appendingPathComponent("Tendedero/Screenshots", isDirectory: true)
+        return base.appendingPathComponent("ShotLine/Screenshots", isDirectory: true)
     }()
+
+    /// Where kept captures go: the folder macOS saved screenshots to before
+    /// inbox mode took over, or the Desktop if it had none.
+    static var keepFolder: URL {
+        let saved = UserDefaults.standard.dictionary(forKey: savedKey) ?? [:]
+        let path = (saved["locationScreenshot"] as? String) ?? (saved["location"] as? String)
+        if let path, !path.isEmpty {
+            let url = URL(fileURLWithPath: (path as NSString).expandingTildeInPath, isDirectory: true)
+            if url.standardizedFileURL != folder.standardizedFileURL { return url }
+        }
+        return FileManager.default.homeDirectoryForCurrentUser.appendingPathComponent("Desktop", isDirectory: true)
+    }
 
     /// The user's choice, kept across launches.
     static var isEnabled: Bool {

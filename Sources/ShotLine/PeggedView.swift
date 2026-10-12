@@ -86,7 +86,7 @@ struct PeggedView: View {
             .opacity(dragging ? 0.45 : 1)
             .overlay(alignment: .topLeading) {
                 // Drawn here, clicked through GrabView, which sits on top. A
-                // cross sends a file in Tendedero's folder to the Trash; for a
+                // cross sends a file in ShotLine's folder to the Trash; for a
                 // file anywhere else it only hides it from the line.
                 Image(systemName: line.isInInbox(item.id) ? "xmark" : "eye.slash")
                     .font(.system(size: 8, weight: .bold))
@@ -97,6 +97,21 @@ struct PeggedView: View {
                     .opacity(hovering && !dragging ? 1 : 0)
                     .scaleEffect(hovering ? 1 : 0.6)
                     .allowsHitTesting(false)
+            }
+            .overlay(alignment: .bottomTrailing) {
+                // Keeps a capture: it moves to the screenshots folder at once
+                // instead of when its time is up. Clicked through GrabView too.
+                if line.isInInbox(item.id) {
+                    Image(systemName: "checkmark")
+                        .font(.system(size: 9, weight: .bold))
+                        .foregroundStyle(.primary)
+                        .frame(width: 20, height: 20)
+                        .glassFrame(circle: true)
+                        .padding(3)
+                        .opacity(hovering && !dragging ? 1 : 0)
+                        .scaleEffect(hovering ? 1 : 0.6)
+                        .allowsHitTesting(false)
+                }
             }
             .overlay(GrabArea(item: item, line: line))
             .overlay(alignment: .bottom) {
@@ -113,7 +128,10 @@ struct PeggedView: View {
             }
             .animation(.easeOut(duration: 0.18), value: hovering)
             .animation(.easeOut(duration: 0.2), value: copied)
-            .onHover { hovering = $0 }
+            .onHover { inside in
+                hovering = inside
+                if inside { line.hoveredID = item.id } else if line.hoveredID == item.id { line.hoveredID = nil }
+            }
             .background(
                 GeometryReader { g in
                     Color.clear.preference(key: HitRectsKey.self,

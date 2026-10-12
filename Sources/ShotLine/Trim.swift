@@ -13,7 +13,13 @@ final class Trim: NSObject, NSWindowDelegate {
     var onSaved: (URL) -> Void = { _ in }
 
     private var window: NSWindow?
+    private var editing: URL?
     private var ready: AnyCancellable?
+
+    /// Whether this recording is open for trimming right now, so it stays put.
+    func isEditing(_ url: URL) -> Bool {
+        window != nil && editing?.standardizedFileURL == url.standardizedFileURL
+    }
 
     func edit(_ url: URL, size: CGSize) {
         window?.close()
@@ -31,6 +37,7 @@ final class Trim: NSObject, NSWindowDelegate {
         window.delegate = self
         window.center()
         self.window = window
+        editing = url
         NSApp.activate(ignoringOtherApps: true)
         window.makeKeyAndOrderFront(nil)
 

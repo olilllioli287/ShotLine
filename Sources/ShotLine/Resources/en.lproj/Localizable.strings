@@ -3,8 +3,8 @@
    swift scripts/check-strings.swift to check. */
 
 /* AppDelegate */
-"Let Tendedero handle your screenshots?" = "Let Tendedero handle your screenshots?";
-"Screenshots will hang on the line the instant you take them, without the floating thumbnail, and will not pile up on your Desktop. Drag one to a folder to keep it, or discard it with the cross. You can turn this off from the menu bar, and your settings come back when Tendedero quits." = "Screenshots will hang on the line the instant you take them, without the floating thumbnail, and will not pile up on your Desktop. Drag one to a folder to keep it, or discard it with the cross. You can turn this off from the menu bar, and your settings come back when Tendedero quits.";
+"Let ShotLine handle your screenshots?" = "Let ShotLine handle your screenshots?";
+"Screenshots will hang on the line the instant you take them, without the floating thumbnail, and will not pile up on your Desktop. Drag one to a folder to keep it, or discard it with the cross. You can turn this off from the menu bar, and your settings come back when ShotLine quits." = "Screenshots will hang on the line the instant you take them, without the floating thumbnail, and will not pile up on your Desktop. Drag one to a folder to keep it, or discard it with the cross. You can turn this off from the menu bar, and your settings come back when ShotLine quits.";
 "Turn on" = "Turn on";
 "Not now" = "Not now";
 "Hide line" = "Hide line";
@@ -15,13 +15,18 @@
 "Open screenshots folder" = "Open screenshots folder";
 "Sounds" = "Sounds";
 "Open at login" = "Open at login";
-"Check for Updates…" = "Check for Updates…";
-"Quit Tendedero" = "Quit Tendedero";
+"User Guide…" = "User Guide…";
+"User Guide" = "User Guide";
+"Quit ShotLine" = "Quit ShotLine";
 "Could not change the login setting" = "Could not change the login setting";
-"Move Tendedero to the Applications folder and try again." = "Move Tendedero to the Applications folder and try again.";
+"Move ShotLine to the Applications folder and try again." = "Move ShotLine to the Applications folder and try again.";
 "Keep on line" = "Keep on line";
 "As many as fit" = "As many as fit";
 "%d photos" = "%d photos";
+"Put away after" = "Put away after";
+"%d seconds" = "%d seconds";
+"%d minutes" = "%d minutes";
+"Never" = "Never";
 "Also watch folders" = "Also watch folders";
 "Add Folder…" = "Add Folder…";
 "Stop Watching" = "Stop Watching";
@@ -44,7 +49,7 @@
 "Over full screen apps" = "Over full screen apps";
 "Hang copied images" = "Hang copied images";
 "Images you copy hang on the line too" = "Images you copy hang on the line too";
-"Tendedero, hanging copied images" = "Tendedero, hanging copied images";
+"ShotLine, hanging copied images" = "ShotLine, hanging copied images";
 
 /* GrabArea */
 "Copy" = "Copy";
@@ -52,7 +57,7 @@
 "Quick Look" = "Quick Look";
 "Markup" = "Markup";
 "Show in Finder" = "Show in Finder";
-"Save to Desktop" = "Save to Desktop";
+"Move to Screenshots Folder" = "Move to Screenshots Folder";
 "Discard" = "Discard";
 "Take down" = "Take down";
 "Move to Trash" = "Move to Trash";

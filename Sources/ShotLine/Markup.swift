@@ -27,6 +27,11 @@ final class Markup: NSObject, NSSharingServiceDelegate {
         service.perform(withItems: [url])
     }
 
+    /// Whether this file is open in Markup right now, so it stays put.
+    func isEditing(_ url: URL) -> Bool {
+        editing?.standardizedFileURL == url.standardizedFileURL
+    }
+
     // MARK: NSSharingServiceDelegate
 
     /// Done was pressed. The extension hands back the edited image and the
@@ -37,6 +42,7 @@ final class Markup: NSObject, NSSharingServiceDelegate {
 
     nonisolated func sharingService(_ sharingService: NSSharingService,
                                     didFailToShareItems items: [Any], error: Error) {
+        MainActor.assumeIsolated { self.editing = nil }
         log.notice("Markup ended without saving: \(error.localizedDescription, privacy: .public)")
     }
 

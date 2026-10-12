@@ -40,6 +40,8 @@ struct GrabArea: NSViewRepresentable {
         }
         view.onTrash = { line.trash(id) }
         view.onDiscard = { line.discard(id) }
+        view.hasCheck = line.isInInbox(id)
+        view.onKeep = { line.keep(id) }
         view.onLongPress = { line.markup(id) }
         view.onForceClick = { line.quickLook(id) }
         view.onPressChange = { pressed in line.pressedID = pressed ? id : nil }
@@ -56,7 +58,7 @@ struct GrabArea: NSViewRepresentable {
             menu.addItem(ClosureMenuItem(L("Show in Finder")) { line.reveal(id) })
             let inInbox = line.isInInbox(id)
             if inInbox {
-                menu.addItem(ClosureMenuItem(L("Save to Desktop")) { line.saveToDesktop(id) })
+                menu.addItem(ClosureMenuItem(L("Move to Screenshots Folder")) { line.keep(id) })
             }
             menu.addItem(.separator())
             if inInbox {
@@ -89,6 +91,10 @@ final class GrabView: NSView, NSDraggingSource {
     var onDragEnd: () -> Void = {}
     var onTrash: () -> Void = {}
     var onDiscard: () -> Void = {}
+    /// A capture in ShotLine's folder has a checkmark in the bottom right
+    /// corner that moves it to the screenshots folder.
+    var hasCheck = false
+    var onKeep: () -> Void = {}
     var onLongPress: () -> Void = {}
     var onForceClick: () -> Void = {}
     var onPressChange: (Bool) -> Void = { _ in }
@@ -116,10 +122,23 @@ final class GrabView: NSView, NSDraggingSource {
         return corner.contains(p)
     }
 
+    private func isInCheck(_ event: NSEvent) -> Bool {
+        guard hasCheck else { return false }
+        let p = convert(event.locationInWindow, from: nil)
+        let corner = NSRect(x: bounds.width - Self.crossHitSize, y: isFlipped ? bounds.height - Self.crossHitSize : 0,
+                            width: Self.crossHitSize, height: Self.crossHitSize)
+        return corner.contains(p)
+    }
+
     override func mouseDown(with event: NSEvent) {
         if isInCross(event) {
             downPoint = nil
             onDiscard()
+            return
+        }
+        if isInCheck(event) {
+            downPoint = nil
+            onKeep()
             return
         }
         if event.clickCount == 2 {

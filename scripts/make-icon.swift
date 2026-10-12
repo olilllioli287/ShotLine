@@ -1,5 +1,6 @@
-// Draws the Tendedero app icon: two screenshots in crisp glass frames,
-// held by aluminium clips on a thin line, over a soft gradient.
+// Draws the ShotLine app icon: two screenshots in crisp glass frames, held
+// by aluminium clips on a thin line, over a teal gradient, with a green
+// checkmark badge for keeping a capture.
 // Usage: swift scripts/make-icon.swift out.png
 import AppKit
 
@@ -37,7 +38,7 @@ ctx.restoreGState()
 
 ctx.saveGState()
 shape.addClip()
-NSGradient(colors: [color(132, 170, 255), color(176, 160, 250), color(255, 190, 196)],
+NSGradient(colors: [color(40, 160, 150), color(70, 190, 170), color(170, 230, 200)],
            atLocations: [0, 0.55, 1], colorSpace: .sRGB)!
     .draw(in: body, angle: -60)
 // Soft light from the top.
@@ -159,6 +160,23 @@ hang(centerX: 695, width: 320, height: 270, angle: -3) { r in
     color(70, 50, 130).setFill(); hills.fill()
 }
 ctx.restoreGState()
+
+// Checkmark badge in the bottom right.
+let badge = NSRect(x: 650, y: 150, width: 220, height: 220)
+ctx.saveGState()
+shadow(0.30, blur: 20, y: -10)
+color(52, 199, 89).setFill()
+NSBezierPath(ovalIn: badge).fill()
+ctx.restoreGState()
+let check = NSBezierPath()
+check.move(to: NSPoint(x: badge.minX + 58, y: badge.midY + 2))
+check.line(to: NSPoint(x: badge.minX + 96, y: badge.midY - 38))
+check.line(to: NSPoint(x: badge.maxX - 52, y: badge.midY + 44))
+check.lineWidth = 26
+check.lineCapStyle = .round
+check.lineJoinStyle = .round
+NSColor.white.setStroke()
+check.stroke()
 
 // Top-lit rim on the icon body.
 shape.lineWidth = 4

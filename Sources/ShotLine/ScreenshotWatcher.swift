@@ -1,7 +1,7 @@
 import Foundation
 
 /// Watches the folder macOS saves screenshots to and reports new ones.
-/// Tendedero never takes screenshots itself: you keep your usual shortcut
+/// ShotLine never takes screenshots itself: you keep your usual shortcut
 /// (or CleanShot, or anything else) and the line just picks them up.
 final class ScreenshotWatcher {
     let folder: URL
@@ -9,7 +9,7 @@ final class ScreenshotWatcher {
     /// extended attribute. In a dedicated folder, any image counts.
     private let onlyTaggedScreenshots: Bool
     /// Screen recordings carry no tag, so they are only picked up in
-    /// Tendedero's own folder, where nothing else is saved.
+    /// ShotLine's own folder, where nothing else is saved.
     private let acceptsRecordings: Bool
     private var known: Set<String>?
     private var source: DispatchSourceFileSystemObject?
@@ -63,7 +63,7 @@ final class ScreenshotWatcher {
     private let launchDate = Date()
 
     /// The folder is opened off the main thread, because `open()` blocks while
-    /// macOS asks whether Tendedero may look inside it. On the Desktop that is
+    /// macOS asks whether ShotLine may look inside it. On the Desktop that is
     /// the consent prompt, and it waits for an answer. Asking from
     /// `applicationDidFinishLaunching` meant the app had not finished launching
     /// while that was pending: no status item appeared, and the signal sources
@@ -88,7 +88,7 @@ final class ScreenshotWatcher {
             return
         }
         guard fd >= 0 else {
-            NSLog("Tendedero: cannot watch \(folder.path)")
+            NSLog("ShotLine: cannot watch \(folder.path)")
             return
         }
         let src = DispatchSource.makeFileSystemObjectSource(

@@ -1,8 +1,8 @@
 /* Spanish. */
 
 /* AppDelegate */
-"Let Tendedero handle your screenshots?" = "¿Quieres que Tendedero se encargue de tus capturas?";
-"Screenshots will hang on the line the instant you take them, without the floating thumbnail, and will not pile up on your Desktop. Drag one to a folder to keep it, or discard it with the cross. You can turn this off from the menu bar, and your settings come back when Tendedero quits." = "Las capturas se colgarán al instante, sin la miniatura flotante, y no se acumularán en el Escritorio. Arrastra una a una carpeta para guardarla, o descártala con la cruz. Puedes desactivarlo desde la barra de menús, y tus ajustes vuelven a ser los de antes al salir de Tendedero.";
+"Let ShotLine handle your screenshots?" = "¿Quieres que ShotLine se encargue de tus capturas?";
+"Screenshots will hang on the line the instant you take them, without the floating thumbnail, and will not pile up on your Desktop. Drag one to a folder to keep it, or discard it with the cross. You can turn this off from the menu bar, and your settings come back when ShotLine quits." = "Las capturas se colgarán al instante, sin la miniatura flotante, y no se acumularán en el Escritorio. Arrastra una a una carpeta para guardarla, o descártala con la cruz. Puedes desactivarlo desde la barra de menús, y tus ajustes vuelven a ser los de antes al salir de ShotLine.";
 "Turn on" = "Activar";
 "Not now" = "Ahora no";
 "Hide line" = "Ocultar tendedero";
@@ -13,13 +13,18 @@
 "Open screenshots folder" = "Abrir carpeta de capturas";
 "Sounds" = "Sonidos";
 "Open at login" = "Abrir al iniciar sesión";
-"Check for Updates…" = "Buscar actualizaciones…";
-"Quit Tendedero" = "Salir de Tendedero";
+"User Guide…" = "Guía de uso…";
+"User Guide" = "Guía de uso";
+"Quit ShotLine" = "Salir de ShotLine";
 "Could not change the login setting" = "No se pudo cambiar el inicio de sesión";
-"Move Tendedero to the Applications folder and try again." = "Mueve Tendedero a la carpeta Aplicaciones y vuelve a intentarlo.";
+"Move ShotLine to the Applications folder and try again." = "Mueve ShotLine a la carpeta Aplicaciones y vuelve a intentarlo.";
 "Keep on line" = "Guardar en la cuerda";
 "As many as fit" = "Las que quepan";
 "%d photos" = "%d fotos";
+"Put away after" = "Recoger después de";
+"%d seconds" = "%d segundos";
+"%d minutes" = "%d minutos";
+"Never" = "Nunca";
 "Also watch folders" = "Vigilar también carpetas";
 "Add Folder…" = "Añadir carpeta…";
 "Stop Watching" = "Dejar de vigilar";
@@ -42,7 +47,7 @@
 "Over full screen apps" = "Sobre apps a pantalla completa";
 "Hang copied images" = "Colgar imágenes copiadas";
 "Images you copy hang on the line too" = "Las imágenes que copias también se cuelgan";
-"Tendedero, hanging copied images" = "Tendedero, colgando imágenes copiadas";
+"ShotLine, hanging copied images" = "ShotLine, colgando imágenes copiadas";
 
 /* GrabArea */
 "Copy" = "Copiar";
@@ -50,7 +55,7 @@
 "Quick Look" = "Vista Rápida";
 "Markup" = "Marcación";
 "Show in Finder" = "Mostrar en Finder";
-"Save to Desktop" = "Guardar en el Escritorio";
+"Move to Screenshots Folder" = "Mover a la carpeta de capturas";
 "Discard" = "Descartar";
 "Take down" = "Descolgar";
 "Move to Trash" = "Mover a la Papelera";

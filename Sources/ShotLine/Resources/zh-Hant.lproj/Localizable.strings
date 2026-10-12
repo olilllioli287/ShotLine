@@ -1,0 +1,69 @@
+/* Chinese (Traditional, Taiwan). */
+
+/* AppDelegate */
+"Let ShotLine handle your screenshots?" = "讓 ShotLine 接管你的截圖？";
+"Screenshots will hang on the line the instant you take them, without the floating thumbnail, and will not pile up on your Desktop. Drag one to a folder to keep it, or discard it with the cross. You can turn this off from the menu bar, and your settings come back when ShotLine quits." = "截圖的那一瞬間，圖片就會掛到曬衣繩上，沒有浮動縮圖，也不會堆在桌面上。拖進檔案夾就會保留，點叉叉就丟掉。隨時可以從選單列關閉，結束 ShotLine 後你的設定會自動還原。";
+"Turn on" = "開啟";
+"Not now" = "以後再說";
+"Hide line" = "隱藏曬衣繩";
+"Show line" = "顯示曬衣繩";
+"Take everything down" = "全部取下";
+"Handle screenshots" = "接管截圖";
+"Screenshots hang instantly and skip the Desktop" = "截圖立即掛上，不經過桌面";
+"Open screenshots folder" = "打開截圖檔案夾";
+"Sounds" = "聲音";
+"Open at login" = "登入時打開";
+"User Guide…" = "使用說明…";
+"User Guide" = "使用說明";
+"Quit ShotLine" = "結束 ShotLine";
+"Could not change the login setting" = "無法更改登入項目設定";
+"Move ShotLine to the Applications folder and try again." = "請先把 ShotLine 移到「應用程式」檔案夾，再試一次。";
+"Keep on line" = "繩上保留";
+"As many as fit" = "放得下的數量";
+"%d photos" = "%d 張";
+"Put away after" = "自動收回";
+"%d seconds" = "%d 秒";
+"%d minutes" = "%d 分鐘";
+"Never" = "永不收回";
+"Also watch folders" = "同時監看檔案夾";
+"Add Folder…" = "加入檔案夾…";
+"Stop Watching" = "停止監看";
+"Watch" = "監看";
+"New images saved to this folder will hang on the line." = "儲存到此檔案夾的新圖片會掛到曬衣繩上。";
+"Shortcut" = "快速鍵";
+"Change Shortcut…" = "更改快速鍵…";
+"Change Shortcut" = "更改快速鍵";
+"None" = "無";
+"Space" = "空白鍵";
+"Press the new shortcut" = "請按下新的快速鍵";
+"Escape cancels. Delete removes the shortcut." = "按 Esc 取消，按刪除鍵移除快速鍵。";
+"Size" = "大小";
+"Small" = "小";
+"Medium" = "中";
+"Large" = "大";
+"Bring the line down" = "放下曬衣繩";
+"When the pointer rests in the menu bar" = "指標停在選單列時";
+"When something new hangs" = "有新內容掛上時";
+"Over full screen apps" = "在全螢幕 App 上";
+"Hang copied images" = "掛上拷貝的圖片";
+"Images you copy hang on the line too" = "拷貝的圖片也會掛上繩";
+"ShotLine, hanging copied images" = "ShotLine，正在掛上拷貝的圖片";
+
+/* GrabArea */
+"Copy" = "拷貝";
+"Open" = "打開";
+"Quick Look" = "快速查看";
+"Markup" = "標示";
+"Show in Finder" = "在 Finder 中顯示";
+"Move to Screenshots Folder" = "移到螢幕擷圖檔案夾";
+"Discard" = "丟掉";
+"Take down" = "取下";
+"Move to Trash" = "丟到垃圾桶";
+"Take down everything to the left" = "取下左側全部";
+"Take down everything to the right" = "取下右側全部";
+
+/* LineView */
+"Take a screenshot and it will hang here" = "截個圖，它就會掛在這裡";
+
+/* PeggedView */
+"Copied" = "已拷貝";

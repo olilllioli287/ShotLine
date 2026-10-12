@@ -1,8 +1,8 @@
 /* Turkish. */
 
 /* AppDelegate */
-"Let Tendedero handle your screenshots?" = "Ekran görüntülerini Tendedero yönetsin mi?";
-"Screenshots will hang on the line the instant you take them, without the floating thumbnail, and will not pile up on your Desktop. Drag one to a folder to keep it, or discard it with the cross. You can turn this off from the menu bar, and your settings come back when Tendedero quits." = "Ekran görüntüleri, kayan küçük resim olmadan anında ipin üzerine asılacak ve Masaüstünüzde birikmeyecek. Saklamak için bir klasöre sürükleyin ya da çarpı ile silin. Bunu menü çubuğundan kapatabilirsiniz; Tendedero kapandığında ayarlarınız geri gelir.";
+"Let ShotLine handle your screenshots?" = "Ekran görüntülerini ShotLine yönetsin mi?";
+"Screenshots will hang on the line the instant you take them, without the floating thumbnail, and will not pile up on your Desktop. Drag one to a folder to keep it, or discard it with the cross. You can turn this off from the menu bar, and your settings come back when ShotLine quits." = "Ekran görüntüleri, kayan küçük resim olmadan anında ipin üzerine asılacak ve Masaüstünüzde birikmeyecek. Saklamak için bir klasöre sürükleyin ya da çarpı ile silin. Bunu menü çubuğundan kapatabilirsiniz; ShotLine kapandığında ayarlarınız geri gelir.";
 "Turn on" = "Etkinleştir";
 "Not now" = "Şimdi değil";
 "Hide line" = "İpi gizle";
@@ -13,13 +13,18 @@
 "Open screenshots folder" = "Ekran görüntüleri klasörünü aç";
 "Sounds" = "Sesler";
 "Open at login" = "Başlangıçta aç";
-"Check for Updates…" = "Güncellemeleri denetle…";
-"Quit Tendedero" = "Tendedero'yu kapat";
+"User Guide…" = "Kullanım kılavuzu…";
+"User Guide" = "Kullanım kılavuzu";
+"Quit ShotLine" = "ShotLine'yu kapat";
 "Could not change the login setting" = "Giriş ayarı değiştirilemedi";
-"Move Tendedero to the Applications folder and try again." = "Tendedero'yu Uygulamalar klasörüne taşıyın ve tekrar deneyin.";
+"Move ShotLine to the Applications folder and try again." = "ShotLine'yu Uygulamalar klasörüne taşıyın ve tekrar deneyin.";
 "Keep on line" = "İpte tut";
 "As many as fit" = "Sığdığı kadar";
 "%d photos" = "%d fotoğraf";
+"Put away after" = "Şu süreden sonra kaldır";
+"%d seconds" = "%d saniye";
+"%d minutes" = "%d dakika";
+"Never" = "Asla";
 "Also watch folders" = "Klasörleri de izle";
 "Add Folder…" = "Klasör ekle…";
 "Stop Watching" = "İzlemeyi durdur";
@@ -42,7 +47,7 @@
 "Over full screen apps" = "Tam ekran uygulamaların üzerinde";
 "Hang copied images" = "Kopyalanan görselleri as";
 "Images you copy hang on the line too" = "Kopyaladığınız görseller de ipe asılır";
-"Tendedero, hanging copied images" = "Tendedero, kopyalanan görselleri asıyor";
+"ShotLine, hanging copied images" = "ShotLine, kopyalanan görselleri asıyor";
 
 /* GrabArea */
 "Copy" = "Kopyala";
@@ -50,7 +55,7 @@
 "Quick Look" = "Hızlı Bakış";
 "Markup" = "İşaretle";
 "Show in Finder" = "Finder'da göster";
-"Save to Desktop" = "Masaüstüne kaydet";
+"Move to Screenshots Folder" = "Ekran görüntüleri klasörüne taşı";
 "Discard" = "Sil";
 "Take down" = "İndir";
 "Move to Trash" = "Çöp Kutusu'na taşı";

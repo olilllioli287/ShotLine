@@ -219,12 +219,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     private func offerInbox() {
         Inbox.wasOffered = true
         let alert = NSAlert()
-        alert.messageText = L("Let Tendedero handle your screenshots?")
+        alert.messageText = L("Let ShotLine handle your screenshots?")
         alert.informativeText = L(
-            "Screenshots will hang on the line the instant you take them, without the floating thumbnail, and will not pile up on your Desktop. Drag one to a folder to keep it, or discard it with the cross. You can turn this off from the menu bar, and your settings come back when Tendedero quits.")
+            "Screenshots will hang on the line the instant you take them, without the floating thumbnail, and will not pile up on your Desktop. Drag one to a folder to keep it, or discard it with the cross. You can turn this off from the menu bar, and your settings come back when ShotLine quits.")
         alert.addButton(withTitle: L("Turn on"))
         alert.addButton(withTitle: L("Not now"))
-        if let icon = NSImage(named: "Tendedero") ?? NSApp.applicationIconImage { alert.icon = icon }
+        if let icon = NSImage(named: "ShotLine") ?? NSApp.applicationIconImage { alert.icon = icon }
         NSApp.activate(ignoringOtherApps: true)
         if alert.runModal() == .alertFirstButtonReturn { setInbox(true) }
     }
@@ -270,7 +270,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         updateCapacity()
         wanted = true
         refresh()
-        if Self.peeksAtNew { reveal(peekFor: 2.5) }
+        // In inbox mode a capture moves on by itself after Line.keepDelay, so
+        // the line stays down that long and the checkmark stays in reach.
+        // Set to never, it stays down until it is put away.
+        if Self.peeksAtNew {
+            reveal(peekFor: Inbox.isEnabled ? (Line.keepDelay.map { $0 + 0.5 } ?? .infinity) : 2.5)
+        }
     }
 
     // MARK: The capture flying to the line
@@ -377,7 +382,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     private func reveal(pinned: Bool = false, peekFor seconds: TimeInterval = 0) {
         guard isPresent else { return }
         if pinned { self.pinned = true }
-        if seconds > 0 { peekUntil = Date().addingTimeInterval(seconds) }
+        if seconds == .infinity {
+            peekUntil = .distantFuture
+        } else if seconds > 0 {
+            peekUntil = Date().addingTimeInterval(seconds)
+        }
         awaySince = nil
         setRevealed(true)
     }
@@ -617,7 +626,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     /// glance that the clipboard is being watched.
     private func updateStatusIcon() {
         let on = ClipboardWatcher.isEnabled
-        let description = on ? L("Tendedero, hanging copied images") : "Tendedero"
+        let description = on ? L("ShotLine, hanging copied images") : "ShotLine"
         let image = NSImage(systemSymbolName: on ? "tshirt.fill" : "tshirt", accessibilityDescription: description)
         image?.isTemplate = true
         statusItem.button?.image = image
@@ -720,6 +729,22 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         keepItem.submenu = keeps
         menu.addItem(keepItem)
 
+        let awayItem = NSMenuItem(title: L("Put away after"), action: nil, keyEquivalent: "")
+        let aways = NSMenu()
+        let choices: [(TimeInterval?, String)] = Line.keepDelayChoices.map { s in
+            (s, s < 60 ? String(format: L("%d seconds"), Int(s)) : String(format: L("%d minutes"), Int(s / 60)))
+        } + [(nil, L("Never"))]
+        for (delay, title) in choices {
+            let item = ClosureMenuItem(title) { [weak self] in
+                Line.keepDelay = delay
+                self?.line.restartKeepTimers()
+            }
+            item.state = Line.keepDelay == delay ? .on : .off
+            aways.addItem(item)
+        }
+        awayItem.submenu = aways
+        menu.addItem(awayItem)
+
         let sizeItem = NSMenuItem(title: L("Size"), action: nil, keyEquivalent: "")
         let sizes = NSMenu()
         for (size, title) in [(Layout.Size.small, L("Small")), (.medium, L("Medium")), (.large, L("Large"))] {
@@ -759,30 +784,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         login.state = SMAppService.mainApp.status == .enabled ? .on : .off
         menu.addItem(login)
 
-        // The app never connects to anything, so it cannot tell when a new
-        // version is out. The website can: it is opened with this version
-        // and language, and says whether there is a newer one.
-        menu.addItem(ClosureMenuItem(L("Check for Updates…")) {
-            NSWorkspace.shared.open(AppDelegate.updatesURL)
-        })
+        menu.addItem(ClosureMenuItem(L("User Guide…")) { Guide.shared.show() })
 
         menu.addItem(.separator())
-        menu.addItem(ClosureMenuItem(L("Quit Tendedero"), key: "q") {
+        menu.addItem(ClosureMenuItem(L("Quit ShotLine"), key: "q") {
             NSApp.terminate(nil)
         })
-    }
-
-    /// tendedero.app with the running version, and the menus' language when
-    /// the website has it too, so the page answers in the same words.
-    private static var updatesURL: URL {
-        var components = URLComponents(string: "https://tendedero.app/")!
-        let version = Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? ""
-        var query = [URLQueryItem(name: "update", value: version)]
-        if let language = Bundle.main.preferredLocalizations.first, ["en", "es", "fr", "pt-BR", "ja", "ko", "zh-Hans"].contains(language) {
-            query.append(URLQueryItem(name: "lang", value: language))
-        }
-        components.queryItems = query
-        return components.url!
     }
 
     private static func toggleLaunchAtLogin() {
@@ -795,7 +802,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         } catch {
             let alert = NSAlert()
             alert.messageText = L("Could not change the login setting")
-            alert.informativeText = L("Move Tendedero to the Applications folder and try again.")
+            alert.informativeText = L("Move ShotLine to the Applications folder and try again.")
             NSApp.activate(ignoringOtherApps: true)
             alert.runModal()
         }
