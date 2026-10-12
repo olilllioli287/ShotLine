@@ -105,9 +105,13 @@ final class Line: ObservableObject {
     /// over the whole screen.
     var onFall: ((Pegged) -> Void)?
 
-    func drop(_ id: UUID, quietly: Bool = false) {
+    /// Called when a photo was dragged into an app, so the line goes back up.
+    var onSent: (() -> Void)?
+
+    /// `falls: false` makes it vanish at once instead of falling off the screen.
+    func drop(_ id: UUID, quietly: Bool = false, falls: Bool = true) {
         guard let i = items.firstIndex(where: { $0.id == id }), !items[i].falling else { return }
-        onFall?(items[i])
+        if falls { onFall?(items[i]) }
         items[i].falling = true
         hitRects[id] = nil
         save()
@@ -243,29 +247,39 @@ final class Line: ObservableObject {
     /// capture does it by itself `keepDelay` seconds after it was hung.
     func keep(_ id: UUID, quietly: Bool = false) {
         guard let item = items.first(where: { $0.id == id && !$0.falling }) else { return }
-        let folder = Inbox.keepFolder
-        do {
-            try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
-            let target = uniqueURL(in: folder, for: item.url.lastPathComponent)
-            try FileManager.default.moveItem(at: item.url, to: target)
-            log.notice("Kept \(item.url.lastPathComponent, privacy: .public) in \(folder.path, privacy: .public)")
+        if moveToKeepFolder(item.url) {
             drop(id, quietly: true)
-        } catch {
-            log.error("Could not keep \(item.url.lastPathComponent, privacy: .public): \(error.localizedDescription, privacy: .public)")
-            if !quietly { NSSound.beep() }
+        } else if !quietly {
+            NSSound.beep()
         }
     }
 
-    /// Dragged into an app, which has its copy: the photo leaves the line,
-    /// and a capture moves on to the screenshots folder. It waits a moment
-    /// first, so the app has read the file before it moves. A photo being
-    /// edited stays, as with the timer.
+    private func moveToKeepFolder(_ url: URL) -> Bool {
+        let folder = Inbox.keepFolder
+        do {
+            try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
+            let target = uniqueURL(in: folder, for: url.lastPathComponent)
+            try FileManager.default.moveItem(at: url, to: target)
+            log.notice("Kept \(url.lastPathComponent, privacy: .public) in \(folder.path, privacy: .public)")
+            return true
+        } catch {
+            log.error("Could not keep \(url.lastPathComponent, privacy: .public): \(error.localizedDescription, privacy: .public)")
+            return false
+        }
+    }
+
+    /// Dragged into an app, which has its copy: the photo vanishes and the
+    /// line goes back up at once. A capture's file moves on to the screenshots
+    /// folder a moment later, once the app has read it. A photo being edited
+    /// stays, as with the timer.
     func sent(_ id: UUID) {
+        guard !held.contains(id), let item = items.first(where: { $0.id == id && !$0.falling }) else { return }
+        let inInbox = isInInbox(id)
+        drop(id, quietly: true, falls: false)
+        onSent?()
+        guard inInbox else { return }
         DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) { [weak self] in
-            guard let self, !self.held.contains(id),
-                  self.items.contains(where: { $0.id == id && !$0.falling }) else { return }
-            if self.isInInbox(id) { self.keep(id, quietly: true) }
-            self.drop(id, quietly: true)
+            _ = self?.moveToKeepFolder(item.url)
         }
     }
 

@@ -90,6 +90,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             self?.line.scroll(by: event.hasPreciseScrollingDeltas ? delta : delta * 12)
         }
         line.onFall = { [weak self] item in self?.fall(item) }
+        // A photo sent to an app: the line has done its job and goes back up.
+        line.onSent = { [weak self] in
+            self?.pinned = false
+            self?.setRevealed(false)
+        }
 
         line.$items
             .receive(on: RunLoop.main)
