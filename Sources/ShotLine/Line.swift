@@ -225,9 +225,6 @@ final class Line: ObservableObject {
         if isInInbox(id) { trash(id, quietly: quietly) } else { drop(id, quietly: quietly) }
     }
 
-    /// The oldest photo falling off a full line. Like the cross, a file from
-    /// ShotLine's folder goes to the Trash, or nothing would ever take it out
-    /// of that folder. If the Trash refuses it, it still leaves the line.
     /// Moves along a line that holds more than fit, from a scroll gesture.
     func scroll(by delta: CGFloat) {
         let most = CGFloat(max(0, items.count - visibleCount)) * Layout.spacing
@@ -382,6 +379,7 @@ final class Line: ObservableObject {
         guard let i = items.firstIndex(where: { $0.url == url && !$0.falling }),
               let thumb = makeThumbnail(url) else { return }
         items[i].thumb = thumb
+        items[i].modified = modificationDate(url)
     }
 
     /// Quick Look on this photo, with the rest of the line a key press away.
