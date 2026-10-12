@@ -10,6 +10,8 @@ struct Pegged: Identifiable, Equatable {
     let id = UUID()
     let url: URL
     var thumb: NSImage
+    /// When the file was last saved, to notice an edit made in another app.
+    var modified: Date? = nil
     /// Every photo hangs a little crooked, like on a real line.
     let tilt = Double.random(in: -2.5...2.5)
     var falling = false
@@ -77,9 +79,9 @@ final class Line: ObservableObject {
 
     @discardableResult
     func hang(_ url: URL, quietly: Bool = false, flying: Bool = false) -> UUID? {
-        guard !items.contains(where: { $0.url == url && !$0.falling }),
+        guard !items.contains(where: { $0.url == url && !$0.falling }), !justKept.contains(url.path),
               let thumb = makeThumbnail(url) else { return nil }
-        var item = Pegged(url: url, thumb: thumb)
+        var item = Pegged(url: url, thumb: thumb, modified: modificationDate(url))
         item.flying = flying
         items.append(item)
         scroll = 0
@@ -150,9 +152,16 @@ final class Line: ObservableObject {
     }
 
     /// Photos whose file was deleted or moved away fall off by themselves.
+    /// Those saved again, like an edit in Preview, show the new version.
     func prune() {
         for item in items where !item.falling && !FileManager.default.fileExists(atPath: item.url.path) {
             drop(item.id, quietly: true)
+        }
+        for i in items.indices where !items[i].falling {
+            let modified = modificationDate(items[i].url)
+            guard modified != items[i].modified, let thumb = makeThumbnail(items[i].url) else { continue }
+            items[i].thumb = thumb
+            items[i].modified = modified
         }
     }
 
@@ -261,6 +270,11 @@ final class Line: ObservableObject {
             let target = uniqueURL(in: folder, for: url.lastPathComponent)
             try FileManager.default.moveItem(at: url, to: target)
             log.notice("Kept \(url.lastPathComponent, privacy: .public) in \(folder.path, privacy: .public)")
+            // A watcher on that folder, like the one on the Desktop, would
+            // see it arrive and hang it all over again.
+            let path = target.path
+            justKept.insert(path)
+            DispatchQueue.main.asyncAfter(deadline: .now() + 5) { [weak self] in self?.justKept.remove(path) }
             return true
         } catch {
             log.error("Could not keep \(url.lastPathComponent, privacy: .public): \(error.localizedDescription, privacy: .public)")
@@ -335,6 +349,9 @@ final class Line: ObservableObject {
     /// it out from under the editor and the edit could not be saved, so these
     /// stay until the checkmark or the menu moves them.
     private var held: Set<UUID> = []
+
+    /// Files ShotLine has just moved to the screenshots folder.
+    private var justKept: Set<String> = []
 
     private func uniqueURL(in folder: URL, for name: String) -> URL {
         let base = (name as NSString).deletingPathExtension
@@ -413,7 +430,7 @@ final class Line: ObservableObject {
         for path in paths where FileManager.default.fileExists(atPath: path) {
             let url = URL(fileURLWithPath: path)
             guard !items.contains(where: { $0.url == url }), let thumb = makeThumbnail(url) else { continue }
-            items.append(Pegged(url: url, thumb: thumb))
+            items.append(Pegged(url: url, thumb: thumb, modified: modificationDate(url)))
         }
         // Captures left in ShotLine's folder at the last quit get their time too.
         for item in items where isInInbox(item.id) { scheduleKeep(item.id) }
@@ -425,6 +442,11 @@ final class Line: ObservableObject {
         guard soundOn, let sound = NSSound(named: name)?.copy() as? NSSound else { return }
         sound.volume = volume
         sound.play()
+    }
+
+    private func modificationDate(_ url: URL) -> Date? {
+        // Not URL.resourceValues: those are cached, and the edit would go unseen.
+        (try? FileManager.default.attributesOfItem(atPath: url.path))?[.modificationDate] as? Date
     }
 
     private func pngData(_ url: URL) -> Data? {

@@ -86,11 +86,18 @@ PLIST
 
 # Sign with a Developer ID when one is in the keychain (or SIGN_IDENTITY is
 # set), with the hardened runtime and a secure timestamp that notarization
-# requires. Without one, sign ad hoc so the app still runs locally.
+# requires. Without one, use a fixed local certificate if there is one
+# (LOCAL_SIGN_IDENTITY, by default the self-signed "Toolbox Local Signing"):
+# an ad hoc signature changes with every build, so macOS treats each build as
+# a new app and asks for Desktop access again. Only then sign ad hoc.
 IDENTITY="${SIGN_IDENTITY:-$(security find-identity -v -p codesigning 2>/dev/null | awk -F'"' '/Developer ID Application/{print $2; exit}')}"
+LOCAL_IDENTITY="${LOCAL_SIGN_IDENTITY:-Toolbox Local Signing}"
 if [ -n "$IDENTITY" ]; then
   codesign --force --options runtime --timestamp --sign "$IDENTITY" "$APP"
   echo "Signed with $IDENTITY"
+elif security find-identity -p codesigning 2>/dev/null | grep -qF "\"$LOCAL_IDENTITY\""; then
+  codesign --force --sign "$LOCAL_IDENTITY" "$APP"
+  echo "Signed with $LOCAL_IDENTITY"
 else
   codesign --force --deep --sign - "$APP" >/dev/null
   echo "Signed ad hoc (no Developer ID found)"

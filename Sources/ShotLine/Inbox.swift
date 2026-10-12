@@ -40,11 +40,15 @@ enum Inbox {
     }()
 
     /// Where kept captures go: the folder macOS saved screenshots to before
-    /// inbox mode took over, or the Desktop if it had none.
+    /// inbox mode took over, or the Desktop if it had none. With inbox mode
+    /// off those settings are back in macOS, and captures still on the line
+    /// follow them there.
     static var keepFolder: URL {
-        let saved = UserDefaults.standard.dictionary(forKey: savedKey) ?? [:]
-        let path = (saved["locationScreenshot"] as? String) ?? (saved["location"] as? String)
-        if let path, !path.isEmpty {
+        let saved = UserDefaults.standard.dictionary(forKey: savedKey)
+        let candidates: [String?] = saved.map { [$0["locationScreenshot"] as? String, $0["location"] as? String] }
+            ?? [CFPreferencesCopyAppValue(screenshotLocationKey, domain) as? String,
+                CFPreferencesCopyAppValue(locationKey, domain) as? String]
+        if let path = candidates.compactMap({ $0 }).first(where: { !$0.isEmpty }) {
             let url = URL(fileURLWithPath: (path as NSString).expandingTildeInPath, isDirectory: true)
             if url.standardizedFileURL != folder.standardizedFileURL { return url }
         }
