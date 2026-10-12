@@ -1,4 +1,4 @@
-// Draws the background of the Tendedero disk image window.
+// Draws the background of the ShotLine disk image window.
 // Usage: swift scripts/make-dmg-background.swift out.png [scale]
 import AppKit
 
@@ -47,7 +47,7 @@ head.lineJoinStyle = .round
 head.stroke()
 
 let style = NSMutableParagraphStyle(); style.alignment = .center
-let text = NSAttributedString(string: "Drag Tendedero to Applications", attributes: [
+let text = NSAttributedString(string: "把 ShotLine 拖到「應用程式」", attributes: [
     .font: NSFont.systemFont(ofSize: 13, weight: .medium),
     .foregroundColor: color(80, 84, 100),
     .paragraphStyle: style,
