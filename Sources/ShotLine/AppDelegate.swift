@@ -47,12 +47,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     private var keepOpen = false
 
     // What brings the line down, from the menu bar's "Bring the line down".
-    // Out of the box, the first two are on and the third off.
+    // Out of the box, only the second is on.
 
     /// Resting the pointer in the menu bar. Off, only the shortcut and the
-    /// menu open it.
+    /// menu open it. Off until turned on, so a trip to the menu bar does not
+    /// drop the line over it; the key is the old "off" switch, so whoever
+    /// turned it back on keeps it on.
     static var opensFromMenuBar: Bool {
-        get { !UserDefaults.standard.bool(forKey: "menuBarRevealOff") }
+        get { !(UserDefaults.standard.object(forKey: "menuBarRevealOff") as? Bool ?? true) }
         set { UserDefaults.standard.set(!newValue, forKey: "menuBarRevealOff") }
     }
 
