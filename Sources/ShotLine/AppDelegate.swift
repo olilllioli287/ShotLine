@@ -23,6 +23,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     private var hotKey: HotKey?
     private var cancellables = Set<AnyCancellable>()
     private var mouseTimer: Timer?
+    private var inboxTimer: Timer?
 
     /// Whether the panel is ordered in. It can be in and still tucked away
     /// above the top edge, like an auto-hiding Dock.
@@ -75,6 +76,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         if Inbox.isEnabled { Inbox.apply() }
         restoreSettingsOnTermination()
         startWatcher()
+        watchScreenshotSettings()
         clipboardWatcher = ClipboardWatcher { [weak self] url in self?.hangCapture(url) }
         if ClipboardWatcher.isEnabled { clipboardWatcher.start() }
 
@@ -255,6 +257,16 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
               !Self.extraFolders.contains(where: { $0.standardizedFileURL == url.standardizedFileURL }) else { return }
         Self.extraFolders.append(url)
         startWatcher()
+    }
+
+    /// Checked every second: a place picked in the Options menu of
+    /// Cmd+Shift+5 would otherwise send captures around the line for good.
+    private func watchScreenshotSettings() {
+        let timer = Timer(timeInterval: 1, repeats: true) { _ in
+            MainActor.assumeIsolated { _ = Inbox.reclaim() }
+        }
+        RunLoop.main.add(timer, forMode: .common)
+        inboxTimer = timer
     }
 
     private func setInbox(_ on: Bool) {

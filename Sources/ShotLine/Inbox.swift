@@ -120,6 +120,54 @@ enum Inbox {
         UserDefaults.standard.removeObject(forKey: savedKey)
     }
 
+    /// What inbox mode sets, key by key, and the name the user's own value
+    /// is saved under while it is on.
+    private static var takeover: [(key: CFString, saved: String, value: CFPropertyList)] {
+        [(locationKey, "location", folder.path as CFString),
+         (screenshotLocationKey, "locationScreenshot", folder.path as CFString),
+         (recordingLocationKey, "locationRecording", folder.path as CFString),
+         (targetKey, "target", "file" as CFString),
+         (screenshotTargetKey, "targetScreenshot", "file" as CFString),
+         (recordingTargetKey, "targetRecording", "file" as CFString),
+         (thumbnailKey, "thumbnail", kCFBooleanFalse)]
+    }
+
+    /// The Options menu of Cmd+Shift+5 can change these while inbox mode is
+    /// on, and captures would then go around the line. Whatever was picked
+    /// there becomes the user's own setting, the one put back when ShotLine
+    /// quits (a new folder is where kept captures go from now on), and the
+    /// line takes screenshots back. Returns whether anything had changed.
+    @discardableResult
+    static func reclaim() -> Bool {
+        guard isEnabled else { return false }
+        CFPreferencesAppSynchronize(domain)
+        var saved = UserDefaults.standard.dictionary(forKey: savedKey) ?? [:]
+        var changed = false
+        for t in takeover {
+            let current = CFPreferencesCopyAppValue(t.key, domain)
+            if isOurs(current, t.value) { continue }
+            saved[t.saved] = current
+            set(t.key, t.value)
+            changed = true
+        }
+        guard changed else { return false }
+        UserDefaults.standard.set(saved, forKey: savedKey)
+        log.notice("Screenshot settings changed outside ShotLine; kept them as the user's and took the line back")
+        return true
+    }
+
+    /// A folder matches however it is spelled, with a tilde or without, and
+    /// a switch whether it was stored as a boolean or as 0 and 1.
+    private static func isOurs(_ value: CFPropertyList?, _ ours: CFPropertyList) -> Bool {
+        guard let value else { return false }
+        if let path = value as? String, let mine = ours as? String {
+            return URL(fileURLWithPath: (path as NSString).expandingTildeInPath).standardizedFileURL
+                == URL(fileURLWithPath: mine).standardizedFileURL
+        }
+        if let flag = value as? Bool, let mine = ours as? Bool { return flag == mine }
+        return CFEqual(value, ours)
+    }
+
     /// Writes through cfprefsd, so the screenshot service sees it at once.
     /// A nil value removes the key and returns it to the macOS default.
     private static func set(_ key: CFString, _ value: Any?) {
