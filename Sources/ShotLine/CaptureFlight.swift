@@ -28,7 +28,7 @@ func captureRect(of url: URL) -> CGRect? {
 /// its glass frame and clip, so there is nothing left to change on landing.
 @MainActor
 final class CaptureFlight {
-    static let duration: CFTimeInterval = 0.65
+    nonisolated static let duration: CFTimeInterval = 0.65
     /// How high the gentle arc rises halfway, in points.
     private static let arc: CGFloat = 30
 
@@ -44,6 +44,10 @@ final class CaptureFlight {
     private let to: CGRect
     private let tilt: CGFloat
     private var falling = false
+    /// Played backwards: from the card on the line out to a plain image.
+    private var reversed = false
+    /// Which photo is flying, so its image can change on the way.
+    private var tag: UUID?
     private var duration: CFTimeInterval = CaptureFlight.duration
     private var start: CFTimeInterval = 0
     private var timer: Timer?
@@ -59,15 +63,25 @@ final class CaptureFlight {
     ///   - from: the captured area, in screen coordinates.
     ///   - to: the card's frame on the line, in screen coordinates, unrotated.
     ///   - tilt: the card's resting tilt in degrees, clockwise, as SwiftUI uses.
+    ///   - reversed: flies the other way, from the card out to `from`.
     static func fly(image: CGImage, from: CGRect, to: CGRect, tilt: CGFloat, on screen: NSScreen,
-                    completion: @escaping () -> Void) {
+                    reversed: Bool = false, duration: CFTimeInterval = CaptureFlight.duration,
+                    tag: UUID? = nil, completion: @escaping () -> Void) {
         let flight = CaptureFlight(image: image, from: from, to: to, tilt: tilt, screen: screen)
+        flight.reversed = reversed
+        flight.tag = tag
+        flight.duration = duration
         current.append(flight)
         flight.completion = { [weak flight] in
             completion()
             current.removeAll { $0 === flight }
         }
         flight.run()
+    }
+
+    /// The photo changed on the way, like an edit saved as it flies back.
+    static func replaceImage(_ image: CGImage, tag: UUID) {
+        for flight in current where flight.tag == tag { flight.photo.contents = image }
     }
 
     /// A discarded card falling off the line, drawn over the whole screen so
@@ -136,7 +150,7 @@ final class CaptureFlight {
     }
 
     private func run() {
-        if falling { update(1); updateFall(0) } else { update(0) }
+        if falling { update(1); updateFall(0) } else { update(reversed ? 1 : 0) }
         window.orderFrontRegardless()
         start = CACurrentMediaTime()
         let timer = Timer(timeInterval: 1.0 / 120.0, repeats: true) { [weak self] _ in
@@ -148,7 +162,7 @@ final class CaptureFlight {
 
     private func tick() {
         let k = min(1, (CACurrentMediaTime() - start) / duration)
-        if falling { updateFall(k) } else { update(k) }
+        if falling { updateFall(k) } else { update(reversed ? 1 - k : k) }
         guard k >= 1 else { return }
         timer?.invalidate()
         timer = nil

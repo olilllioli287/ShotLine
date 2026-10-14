@@ -25,6 +25,10 @@ final class ScreenshotWatcher {
     private let onNew: (URL) -> Void
     private let onChange: () -> Void
 
+    /// How recently a file on the Desktop must have been created to count
+    /// as a screenshot just taken.
+    private static let freshness: TimeInterval = 15
+
     private static let imageExtensions: Set<String> = ["png", "jpg", "jpeg", "heic", "tif", "tiff", "gif", "webp"]
 
     static let desktop = FileManager.default.homeDirectoryForCurrentUser.appendingPathComponent("Desktop")
@@ -134,13 +138,14 @@ final class ScreenshotWatcher {
             let files = self.listFolder()
             let settled = files.filter { self.creationDate($0) < self.launchDate }
             let candidates = files.filter { self.isCandidate($0) }
-            DispatchQueue.main.async { self.adopt(files, settled, candidates) }
+            let fresh = Set(candidates.filter { -self.creationDate($0).timeIntervalSinceNow < Self.freshness }.map(\.path))
+            DispatchQueue.main.async { self.adopt(files, settled, candidates, fresh) }
         }
     }
 
     /// Takes a finished listing, reports what is new, then runs the listing
     /// that was asked for while this one was in flight.
-    private func adopt(_ files: [URL], _ settled: [URL], _ candidates: [URL]) {
+    private func adopt(_ files: [URL], _ settled: [URL], _ candidates: [URL], _ fresh: Set<String>) {
         listing = false
         guard !stopped else { return }
         // The first listing adopts everything that was already there when the
@@ -148,6 +153,9 @@ final class ScreenshotWatcher {
         let first = known == nil
         let base = known ?? Set(settled.map(\.path))
         for url in candidates where !base.contains(url.path) {
+            // On the Desktop, a screenshot renamed or moved there is an old
+            // file under a new name; only one just taken is new.
+            if onlyTaggedScreenshots && !first && !fresh.contains(url.path) { continue }
             onNew(url)
         }
         known = Set(files.map(\.path))

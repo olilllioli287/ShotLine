@@ -17,11 +17,14 @@ struct Pegged: Identifiable, Equatable {
     var falling = false
     /// Still flying in from where it was captured; the card waits hidden.
     var flying = false
+    /// Taken off the line while it is open in Markup or the trimming
+    /// window. It hangs again when the editor closes.
+    var away = false
     /// A screen recording rather than a screenshot.
     var isRecording: Bool { ShotLine.isRecording(url) }
 
     static func == (a: Pegged, b: Pegged) -> Bool {
-        a.id == b.id && a.falling == b.falling && a.flying == b.flying && a.thumb === b.thumb
+        a.id == b.id && a.falling == b.falling && a.flying == b.flying && a.away == b.away && a.thumb === b.thumb
     }
 }
 
@@ -80,7 +83,8 @@ final class Line: ObservableObject {
     @discardableResult
     func hang(_ url: URL, quietly: Bool = false, flying: Bool = false) -> UUID? {
         guard !items.contains(where: { $0.url == url && !$0.falling }), !justKept.contains(url.path),
-              let thumb = makeThumbnail(url) else { return nil }
+              !wasHung(url), let thumb = makeThumbnail(url) else { return nil }
+        if let file = fileID(url) { hungFiles.insert(file) }
         var item = Pegged(url: url, thumb: thumb, modified: modificationDate(url))
         item.flying = flying
         items.append(item)
@@ -109,6 +113,10 @@ final class Line: ObservableObject {
 
     /// Called when a photo was dragged into an app, so the line goes back up.
     var onSent: (() -> Void)?
+
+    /// Called when an edited photo hangs again, so the line comes down to show
+    /// it, with where the editor showed it when it should fly back.
+    var onRehung: ((UUID, CGRect?) -> Void)?
 
     /// `falls: false` makes it vanish at once instead of falling off the screen.
     func drop(_ id: UUID, quietly: Bool = false, falls: Bool = true) {
@@ -310,22 +318,26 @@ final class Line: ObservableObject {
     /// The photo the pointer is over. Not published: only the timer reads it.
     var hoveredID: UUID?
 
-    /// Bumped when the delay changes, so timers set with the old one stop.
-    private var keepGeneration = 0
+    /// The timer each capture is waiting on. A new timer replaces the old
+    /// one, and one that no longer matches does nothing when it fires.
+    private var keepTimers: [UUID: UUID] = [:]
 
     /// After a change of delay, every waiting capture starts over with it.
     func restartKeepTimers() {
-        keepGeneration += 1
-        for item in items where !item.falling && isInInbox(item.id) { scheduleKeep(item.id) }
+        for item in items where !item.falling && !item.away && isInInbox(item.id) { scheduleKeep(item.id) }
     }
 
     /// Moves a capture from ShotLine's folder once its time is up. While it
     /// is being held, dragged, edited or looked at, it waits a little longer.
     private func scheduleKeep(_ id: UUID, after delay: TimeInterval? = Line.keepDelay) {
-        guard let delay else { return }
-        let generation = keepGeneration
+        guard let delay else {
+            keepTimers[id] = nil
+            return
+        }
+        let timer = UUID()
+        keepTimers[id] = timer
         DispatchQueue.main.asyncAfter(deadline: .now() + delay) { [weak self] in
-            guard let self, generation == self.keepGeneration, !self.held.contains(id), self.isInInbox(id),
+            guard let self, self.keepTimers[id] == timer, !self.held.contains(id), self.isInInbox(id),
                   let item = self.items.first(where: { $0.id == id && !$0.falling }) else { return }
             if self.isBusy(item) {
                 self.scheduleKeep(id, after: 2)
@@ -342,13 +354,30 @@ final class Line: ObservableObject {
             || QuickLook.shared.isVisible
     }
 
-    /// Photos opened in another app or in Markup. Moving the file would pull
+    /// Photos opened in another app, like Preview. Moving the file would pull
     /// it out from under the editor and the edit could not be saved, so these
-    /// stay until the checkmark or the menu moves them.
+    /// stay until the checkmark or the menu moves them. Markup and trimming
+    /// say when they are done, so those photos come back instead.
     private var held: Set<UUID> = []
 
     /// Files ShotLine has just moved to the screenshots folder.
     private var justKept: Set<String> = []
+
+    /// Every file hung since launch, by its identity on disk rather than its
+    /// path. A photo dragged to the Desktop, or renamed there, is the same
+    /// file under a new name, and a watcher would otherwise hang it again.
+    private var hungFiles: Set<String> = []
+
+    private func wasHung(_ url: URL) -> Bool {
+        fileID(url).map(hungFiles.contains) ?? false
+    }
+
+    /// The volume and inode: kept by a move or a rename, new for a copy.
+    private func fileID(_ url: URL) -> String? {
+        var info = stat()
+        guard stat(url.path, &info) == 0 else { return nil }
+        return "\(info.st_dev):\(info.st_ino)"
+    }
 
     private func uniqueURL(in folder: URL, for name: String) -> URL {
         let base = (name as NSString).deletingPathExtension
@@ -362,16 +391,68 @@ final class Line: ObservableObject {
         return candidate
     }
 
-    /// Long press: open the photo in the system Markup editor. Markup does
-    /// not edit video, so a recording opens in the trimming editor instead.
+    /// Click: open the photo in the system Markup editor. Markup does not
+    /// edit video, so a recording opens in the trimming editor instead.
+    /// Its timer stops, and once the editor is up the photo leaves the line
+    /// for it (`takeAway`); Done or Escape hangs it again with the full time
+    /// ahead of it.
     func markup(_ id: UUID) {
-        guard let item = items.first(where: { $0.id == id }) else { return }
-        held.insert(id)
+        guard let i = items.firstIndex(where: { $0.id == id && !$0.falling && !$0.away }) else { return }
+        let item = items[i]
         if item.isRecording {
             Trim.shared.edit(item.url, size: item.thumb.size)
         } else {
-            Markup.shared.edit(item.url)
+            // Markup edits one file at a time.
+            if Markup.shared.isOpen {
+                NSSound.beep()
+                return
+            }
+            guard Markup.shared.edit(item.url) else {
+                // Opened in Preview instead, which never says when it is done.
+                held.insert(id)
+                return
+            }
         }
+        keepTimers[id] = nil
+    }
+
+    /// The editor is up: the photo leaves the line to fly into it.
+    func takeAway(_ id: UUID) {
+        guard let i = items.firstIndex(where: { $0.id == id && !$0.falling }) else { return }
+        if hoveredID == id { hoveredID = nil }
+        hitRects[id] = nil
+        items[i].away = true
+    }
+
+    /// The editor is closing: the photo flies back from where it showed it.
+    func editClosing(_ url: URL, from area: CGRect) {
+        rehang(url, from: area)
+    }
+
+    /// The editor has closed and any edit is saved. A photo still away, from
+    /// an editor that closed without warning, hangs again now.
+    func editEnded(_ url: URL, from area: CGRect?) {
+        if items.contains(where: { $0.url == url && $0.away && !$0.falling }) {
+            rehang(url, from: area)
+        } else {
+            reloadThumbnail(for: url)
+        }
+    }
+
+    /// The photo hangs again, showing any edit, flying back from the editor
+    /// when it knows where that was.
+    private func rehang(_ url: URL, from area: CGRect?) {
+        guard let i = items.firstIndex(where: { $0.url == url && !$0.falling }) else { return }
+        if let thumb = makeThumbnail(url) {
+            items[i].thumb = thumb
+            items[i].modified = modificationDate(url)
+        }
+        let wasAway = items[i].away
+        items[i].away = false
+        if wasAway && area != nil { items[i].flying = true }
+        let id = items[i].id
+        if isInInbox(id) { scheduleKeep(id) }
+        onRehung?(id, wasAway ? area : nil)
     }
 
     /// After editing, the photo on the line shows the new version.
@@ -429,6 +510,7 @@ final class Line: ObservableObject {
             let url = URL(fileURLWithPath: path)
             guard !items.contains(where: { $0.url == url }), let thumb = makeThumbnail(url) else { continue }
             items.append(Pegged(url: url, thumb: thumb, modified: modificationDate(url)))
+            if let file = fileID(url) { hungFiles.insert(file) }
         }
         // Captures left in ShotLine's folder at the last quit get their time too.
         for item in items where isInInbox(item.id) { scheduleKeep(item.id) }

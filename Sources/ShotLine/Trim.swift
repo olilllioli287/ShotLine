@@ -11,6 +11,22 @@ final class Trim: NSObject, NSWindowDelegate {
 
     /// Called with the file once the trimmed recording has replaced it.
     var onSaved: (URL) -> Void = { _ in }
+    /// Called once the window is up, still invisible, with the area the
+    /// recording fills on screen. `show()` brings it in.
+    var onShown: (URL, CGRect) -> Void = { _, _ in }
+    /// Called with the file once the trimming window has closed, and where
+    /// the recording was on screen.
+    var onEnded: (URL, CGRect?) -> Void = { _, _ in }
+
+    /// Brings in the window once the recording has flown into place.
+    func show() {
+        guard let window, window.alphaValue < 1 else { return }
+        window.animator().alphaValue = 1
+    }
+
+    private var videoArea: CGRect? {
+        window.map { $0.convertToScreen($0.contentLayoutRect) }
+    }
 
     private var window: NSWindow?
     private var editing: URL?
@@ -39,7 +55,11 @@ final class Trim: NSObject, NSWindowDelegate {
         self.window = window
         editing = url
         NSApp.activate(ignoringOtherApps: true)
+        // The recording flies in first; the window waits invisible for it.
+        window.alphaValue = 0
         window.makeKeyAndOrderFront(nil)
+        if let area = videoArea { onShown(url, area) }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) { [weak self] in self?.show() }
 
         // The trimming bar can only come up once the recording has loaded.
         ready = item.publisher(for: \.status)
@@ -68,9 +88,11 @@ final class Trim: NSObject, NSWindowDelegate {
 
     func windowWillClose(_ notification: Notification) {
         guard (notification.object as? NSWindow) === window else { return }
+        let area = videoArea
         (window?.contentView as? AVPlayerView)?.player?.pause()
         ready = nil
         window = nil
+        if let editing { onEnded(editing, area) }
     }
 
     // MARK: Writing back

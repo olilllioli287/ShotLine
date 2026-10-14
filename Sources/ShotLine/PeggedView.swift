@@ -24,11 +24,13 @@ struct PeggedView: View {
         .offset(y: arrived ? 0 : -46)
         // The fall itself is drawn over the whole screen by CaptureFlight, so
         // the card here just steps aside at once.
-        .opacity(item.falling || item.flying ? 0 : (arrived ? 1 : 0))
+        .opacity(item.falling || item.flying || item.away ? 0 : (arrived ? 1 : 0))
         .transaction { t in if item.falling { t.animation = nil } }
         .animation(.easeOut(duration: 0.16), value: item.flying)
+        .animation(.easeOut(duration: 0.16), value: item.away)
         .onAppear(perform: arrive)
         .onChange(of: item.flying) { was, now in if was && !now { land() } }
+        .onChange(of: item.away) { _, now in if now { leave() } else { arrive() } }
         .onChange(of: line.gust) { _, _ in breeze() }
         .onChange(of: copied) { _, isCopied in if isCopied { nudge(3) } }
     }
@@ -135,7 +137,7 @@ struct PeggedView: View {
             .background(
                 GeometryReader { g in
                     Color.clear.preference(key: HitRectsKey.self,
-                                           value: item.falling ? [:] : [item.id: g.frame(in: .global)])
+                                           value: item.falling || item.away ? [:] : [item.id: g.frame(in: .global)])
                 }
             )
     }
@@ -149,6 +151,12 @@ struct PeggedView: View {
         swing = 16
         withAnimation(.spring(response: 0.42, dampingFraction: 0.72)) { arrived = true }
         withAnimation(.interpolatingSpring(stiffness: 46, damping: 2.6)) { swing = 0 }
+    }
+
+    /// Taken off to be edited: it comes back with the same drop as a new photo.
+    private func leave() {
+        hovering = false
+        arrived = false
     }
 
     /// Landing after the flight: no jump, just a small sway from rest.

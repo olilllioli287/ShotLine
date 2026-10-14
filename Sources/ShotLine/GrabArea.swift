@@ -9,7 +9,8 @@ import SwiftUI
 /// - The Trash discards it.
 /// - Nowhere that accepts it: the photo flies back to the line.
 ///
-/// Click copies, press and hold opens Markup, the corner cross discards.
+/// Click opens Markup, press and hold copies, a double click or the corner
+/// cross discards.
 struct GrabArea: NSViewRepresentable {
     let item: Pegged
     let line: Line
@@ -30,8 +31,8 @@ struct GrabArea: NSViewRepresentable {
         let isRecording = item.isRecording
         view.url = item.url
         view.dragImage = item.thumb
-        view.onClick = { line.copy(id) }
-        view.onDoubleClick = { line.open(id) }
+        view.onClick = { line.markup(id) }
+        view.onDoubleClick = { line.discard(id) }
         view.onDragStart = { line.draggingID = id }
         view.onDragEnd = {
             line.draggingID = nil
@@ -43,7 +44,7 @@ struct GrabArea: NSViewRepresentable {
         view.onDiscard = { line.discard(id) }
         view.hasCheck = line.isInInbox(id)
         view.onKeep = { line.keep(id) }
-        view.onLongPress = { line.markup(id) }
+        view.onLongPress = { line.copy(id) }
         view.onForceClick = { line.quickLook(id) }
         view.onPressChange = { pressed in line.pressedID = pressed ? id : nil }
         view.menuProvider = {
@@ -107,9 +108,11 @@ final class GrabView: NSView, NSDraggingSource {
     private var startedDrag = false
     private var holdTimer: Timer?
     private var didLongPress = false
+    /// A click waits to see whether it becomes a double click.
+    private var clickTimer: Timer?
 
-    /// How long you hold before Markup opens. Long enough not to fire on a
-    /// slow click, short enough to feel deliberate.
+    /// How long you hold before the photo is copied. Long enough not to fire
+    /// on a slow click, short enough to feel deliberate.
     private static let holdDuration: TimeInterval = 0.45
 
     override func acceptsFirstMouse(for event: NSEvent?) -> Bool { true }
@@ -146,6 +149,9 @@ final class GrabView: NSView, NSDraggingSource {
         }
         if event.clickCount == 2 {
             downPoint = nil
+            guard clickTimer != nil else { return }
+            clickTimer?.invalidate()
+            clickTimer = nil
             onDoubleClick()
             return
         }
@@ -197,7 +203,15 @@ final class GrabView: NSView, NSDraggingSource {
 
     override func mouseUp(with event: NSEvent) {
         endPress()
-        if downPoint != nil && !startedDrag && !didLongPress && event.clickCount == 1 { onClick() }
+        if downPoint != nil && !startedDrag && !didLongPress && event.clickCount == 1 {
+            clickTimer?.invalidate()
+            clickTimer = Timer.scheduledTimer(withTimeInterval: NSEvent.doubleClickInterval, repeats: false) { [weak self] _ in
+                MainActor.assumeIsolated {
+                    self?.clickTimer = nil
+                    self?.onClick()
+                }
+            }
+        }
         downPoint = nil
         didLongPress = false
     }

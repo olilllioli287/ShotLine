@@ -83,8 +83,27 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         setUpStatusItem()
         watchMenuBarClicks()
 
-        Markup.shared.onSaved = { [weak self] url in self?.line.reloadThumbnail(for: url) }
+        Markup.shared.onSaved = { [weak self] url in
+            guard let self else { return }
+            self.line.reloadThumbnail(for: url)
+            // Done saves before Markup goes away: the photo flies back from the
+            // edited file, not the image that flew in.
+            if let kept = self.editedImage, self.line.items.first(where: { $0.id == kept.id })?.url == url {
+                self.editedImage = nil
+            }
+            // Saved later than that, the photo is already flying back and shows
+            // the edit on the way.
+            if let item = self.line.items.first(where: { $0.url == url && $0.flying && !$0.falling }),
+               let image = makeThumbnail(url, maxPixels: 1500)?.cgImage(forProposedRect: nil, context: nil, hints: nil) {
+                CaptureFlight.replaceImage(image, tag: item.id)
+            }
+        }
         Trim.shared.onSaved = { [weak self] url in self?.line.reloadThumbnail(for: url) }
+        Markup.shared.onShown = { [weak self] url, area in self?.zoomIn(url, to: area) { Markup.shared.show() } }
+        Trim.shared.onShown = { [weak self] url, area in self?.zoomIn(url, to: area) { Trim.shared.show() } }
+        Markup.shared.onClosing = { [weak self] url, area in self?.line.editClosing(url, from: area) }
+        Markup.shared.onEnded = { [weak self] url, area in self?.line.editEnded(url, from: area) }
+        Trim.shared.onEnded = { [weak self] url, area in self?.line.editEnded(url, from: area) }
         panel.onScroll = { [weak self] event in
             // Sideways on a trackpad, or the wheel of a mouse.
             let delta = abs(event.scrollingDeltaX) >= abs(event.scrollingDeltaY)
@@ -103,6 +122,21 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             } else {
                 self.reveal(peekFor: Self.holdDuration)
             }
+        }
+
+        // An edited photo hangs again: the line comes down to show it, and
+        // stays down as long as after a capture. The photo shrinks back up
+        // to it from where the editor showed it.
+        line.onRehung = { [weak self] id, area in
+            guard let self else { return }
+            self.wanted = true
+            self.refresh()
+            self.reveal(peekFor: Self.holdDuration)
+            let ready = self.editedImage?.id == id ? self.editedImage?.image : nil
+            self.editedImage = nil
+            guard let area, let item = self.line.items.first(where: { $0.id == id }) else { return }
+            // At once: the editor has just vanished and the photo takes its place.
+            self.fly(id, from: Self.fit(item.thumb.size, in: area), image: ready)
         }
 
         line.$items
@@ -320,7 +354,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         }
     }
 
-    private func fly(_ id: UUID, from: CGRect) {
+    /// `image` is one already drawn at this size, to set off without delay.
+    private func fly(_ id: UUID, from: CGRect, image ready: CGImage? = nil) {
         guard isPresent, isRevealed, CaptureFlight.flightsInProgress < 2, let screen = panel.screen,
               let to = cardFrame(for: id),
               let item = line.items.first(where: { $0.id == id }) else {
@@ -330,14 +365,47 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         // Sharp enough while it starts out at the captured size, which a
         // full Retina screen would otherwise take at full resolution.
         let pixels = Int(max(from.width, from.height) * screen.backingScaleFactor)
-        guard let image = makeThumbnail(item.url, maxPixels: min(1500, max(400, pixels)))?
+        guard let image = ready ?? makeThumbnail(item.url, maxPixels: min(1500, max(400, pixels)))?
             .cgImage(forProposedRect: nil, context: nil, hints: nil) else {
             line.land(id)
             return
         }
-        CaptureFlight.fly(image: image, from: from, to: to, tilt: CGFloat(item.tilt), on: screen) { [weak self] in
+        CaptureFlight.fly(image: image, from: from, to: to, tilt: CGFloat(item.tilt), on: screen, tag: id) { [weak self] in
             self?.line.land(id)
         }
+    }
+
+    /// A clicked photo comes down off the line and grows into the editor
+    /// waiting for it, which then appears around it.
+    private func zoomIn(_ url: URL, to area: CGRect, then show: @escaping () -> Void) {
+        guard let item = line.items.first(where: { $0.url == url && !$0.falling && !$0.away }) else {
+            show()
+            return
+        }
+        let card = cardFrame(for: item.id)
+        line.takeAway(item.id)
+        let to = Self.fit(item.thumb.size, in: area)
+        guard isPresent, isRevealed, let screen = panel.screen, let card,
+              let image = makeThumbnail(item.url, maxPixels: min(1500, Int(max(to.width, to.height) * screen.backingScaleFactor)))?
+                  .cgImage(forProposedRect: nil, context: nil, hints: nil) else {
+            show()
+            return
+        }
+        editedImage = (item.id, image)
+        CaptureFlight.fly(image: image, from: to, to: card, tilt: CGFloat(item.tilt), on: screen,
+                          reversed: true, duration: 0.5, completion: show)
+    }
+
+    /// The image that flew into the editor, kept to fly back out the moment
+    /// the editor closes.
+    private var editedImage: (id: UUID, image: CGImage)?
+
+    /// An image of this size as large as fits in the area, centred.
+    private static func fit(_ size: CGSize, in area: CGRect) -> CGRect {
+        guard size.width > 0, size.height > 0 else { return area }
+        let scale = min(area.width / size.width, area.height / size.height)
+        let w = size.width * scale, h = size.height * scale
+        return CGRect(x: area.midX - w / 2, y: area.midY - h / 2, width: w, height: h)
     }
 
     /// A discarded card falls over the whole screen, from where it hangs.
