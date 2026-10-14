@@ -43,6 +43,8 @@ final class CaptureFlight {
     private let from: CGRect
     private let to: CGRect
     private let tilt: CGFloat
+    /// The photo's proportions, for where it sits inside the card.
+    private var imageSize: CGSize
     private var falling = false
     /// Played backwards: from the card on the line out to a plain image.
     private var reversed = false
@@ -81,7 +83,10 @@ final class CaptureFlight {
 
     /// The photo changed on the way, like an edit saved as it flies back.
     static func replaceImage(_ image: CGImage, tag: UUID) {
-        for flight in current where flight.tag == tag { flight.photo.contents = image }
+        for flight in current where flight.tag == tag {
+            flight.photo.contents = image
+            flight.imageSize = CGSize(width: image.width, height: image.height)
+        }
     }
 
     /// A discarded card falling off the line, drawn over the whole screen so
@@ -100,6 +105,7 @@ final class CaptureFlight {
         self.from = from
         self.to = to
         self.tilt = tilt
+        imageSize = CGSize(width: image.width, height: image.height)
         window = NSPanel(contentRect: screen.frame, styleMask: [.borderless, .nonactivatingPanel],
                          backing: .buffered, defer: false)
         window.isOpaque = false
@@ -129,7 +135,7 @@ final class CaptureFlight {
         edge.mask = edgeMask
 
         photo.contents = image
-        photo.contentsGravity = .resizeAspectFill
+        photo.contentsGravity = .resize
         photo.masksToBounds = true
         photo.contentsScale = scale
 
@@ -228,8 +234,15 @@ final class CaptureFlight {
         edgeMask.path = CGPath(roundedRect: container.bounds.insetBy(dx: 0.75, dy: 0.75),
                                cornerWidth: max(0, radius - 0.75), cornerHeight: max(0, radius - 0.75), transform: nil)
         edge.opacity = chrome
-        photo.frame = container.bounds.insetBy(dx: inset, dy: inset)
-        photo.cornerRadius = max(0, radius - inset)
+        // The whole photo, centred in the card and rounded itself, as the
+        // card on the line shows it.
+        let box = container.bounds.insetBy(dx: inset, dy: inset)
+        let scale = imageSize.width > 0 && imageSize.height > 0
+            ? min(box.width / imageSize.width, box.height / imageSize.height) : 1
+        let pw = imageSize.width > 0 ? imageSize.width * scale : box.width
+        let ph = imageSize.height > 0 ? imageSize.height * scale : box.height
+        photo.frame = CGRect(x: box.midX - pw / 2, y: box.midY - ph / 2, width: pw, height: ph)
+        photo.cornerRadius = min(max(0, radius - inset), pw / 2, ph / 2)
         // The clip grips the top edge: 26 points tall, 12 of them over the card.
         clip.frame = CGRect(x: w / 2 - 4.5, y: h - 12, width: 9, height: 26)
         clip.opacity = chrome

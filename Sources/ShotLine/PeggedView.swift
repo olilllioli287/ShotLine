@@ -35,13 +35,11 @@ struct PeggedView: View {
         .onChange(of: copied) { _, isCopied in if isCopied { nudge(3) } }
     }
 
-    /// The photo fits inside the card area keeping its proportions, so the
-    /// white border hugs it whether the screenshot is wide or tall.
+    /// Every card is the same size, so a long strip or a tall scroll is as
+    /// easy to grab as any. The whole photo fits inside it, uncropped; the
+    /// flights draw it the same way (aspect fit), so it lands as it hangs.
     static func photoSize(for size: CGSize) -> CGSize {
-        let maxW = Layout.cardWidth - 14, maxH = Layout.photoMaxHeight
-        guard size.width > 0, size.height > 0 else { return CGSize(width: maxW, height: maxH) }
-        let scale = min(maxW / size.width, maxH / size.height)
-        return CGSize(width: size.width * scale, height: size.height * scale)
+        CGSize(width: Layout.cardWidth - 14, height: Layout.photoMaxHeight)
     }
 
     /// The card around the photo: the photo plus the glass inset.
@@ -59,7 +57,7 @@ struct PeggedView: View {
         Image(nsImage: item.thumb)
             .resizable()
             .interpolation(.high)
-            .frame(width: photoSize.width, height: photoSize.height)
+            .scaledToFit()
             // Concentric corners: the photo's radius is the frame's minus the
             // inset, the way macOS rounds nested shapes.
             .clipShape(RoundedRectangle(cornerRadius: Frame.radius - Frame.inset, style: .continuous))
@@ -67,6 +65,7 @@ struct PeggedView: View {
                 RoundedRectangle(cornerRadius: Frame.radius - Frame.inset, style: .continuous)
                     .strokeBorder(Color.white.opacity(0.18), lineWidth: 0.5)
             )
+            .frame(width: photoSize.width, height: photoSize.height)
             .overlay {
                 // A recording says so with a play button over its first frame.
                 if item.isRecording {
