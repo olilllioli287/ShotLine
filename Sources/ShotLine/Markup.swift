@@ -137,6 +137,7 @@ final class Markup: NSObject, NSSharingServiceDelegate {
     }
 
     private func reportClosing() {
+        FocusReturn.shared.scheduleCheck()
         guard !reportedClosing, let url = editing, let area = imageArea else { return }
         reportedClosing = true
         onClosing(url, area)
@@ -154,6 +155,15 @@ final class Markup: NSObject, NSSharingServiceDelegate {
 
     /// Whether Markup is open on any file.
     var isOpen: Bool { editing != nil }
+
+    /// Whether any of Markup's windows is still on screen or about to come
+    /// in. Escape closes the editor without telling the delegate, so
+    /// `isOpen` can stay true after it is gone.
+    var isOnScreen: Bool {
+        if !hidden.isEmpty { return true }
+        guard let editor else { return false }
+        return editor.isVisible && editor.alphaValue > 0.05
+    }
 
     /// Whether this file is open in Markup right now, so it stays put.
     func isEditing(_ url: URL) -> Bool {

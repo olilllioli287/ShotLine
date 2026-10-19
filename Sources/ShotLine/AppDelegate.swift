@@ -75,6 +75,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
 
         if Inbox.isEnabled { Inbox.apply() }
         restoreSettingsOnTermination()
+        FocusReturn.shared.start()
         startWatcher()
         watchScreenshotSettings()
         clipboardWatcher = ClipboardWatcher { [weak self] url in self?.hangCapture(url) }
