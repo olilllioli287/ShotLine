@@ -66,6 +66,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         set { UserDefaults.standard.set(!newValue, forKey: "quietHang") }
     }
 
+    /// A capture taken on another display hangs on the main one, the display
+    /// with the menu bar. Off, it hangs on the screen it was taken on.
+    static var capturesOnMainScreen: Bool {
+        get { !UserDefaults.standard.bool(forKey: "capturesFollowScreen") }
+        set { UserDefaults.standard.set(!newValue, forKey: "capturesFollowScreen") }
+    }
+
     func applicationDidFinishLaunching(_ notification: Notification) {
         let host = NSHostingView(rootView: LineView(line: line))
         host.sizingOptions = []
@@ -347,12 +354,18 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     /// A new screenshot lifts off from where it was taken and flies to its
     /// place on the line. Without a known capture area it simply drops in.
     private func hangCapture(_ url: URL) {
-        let from = captureRect(of: url)
-        let screen = from.flatMap { from in
+        var from = captureRect(of: url)
+        var screen = from.flatMap { from in
             NSScreen.screens.first { NSMouseInRect(CGPoint(x: from.midX, y: from.midY), $0.frame, false) }
         }
+        // A flight is drawn on the line's screen alone, so a capture sent from
+        // another display to the main one drops in instead.
+        if Self.capturesOnMainScreen, let main = NSScreen.screens.first, screen != main {
+            screen = main
+            from = nil
+        }
         // Every capture brings the line down before it hangs, on the screen it
-        // was taken on. On a full line the oldest photo then falls in view as
+        // was taken on or the main one. On a full line the oldest photo falls as
         // the new one flies in.
         comeDown(on: screen)
         guard let id = line.hang(url, flying: from != nil) else {
@@ -762,6 +775,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         clipboard.state = ClipboardWatcher.isEnabled ? .on : .off
         clipboard.toolTip = L("Images you copy hang on the line too")
         menu.addItem(clipboard)
+
+        let mainScreen = ClosureMenuItem(L("Hang screenshots on the main display")) {
+            AppDelegate.capturesOnMainScreen.toggle()
+        }
+        mainScreen.state = Self.capturesOnMainScreen ? .on : .off
+        mainScreen.toolTip = L("Screenshots taken on another display hang where the menu bar is")
+        menu.addItem(mainScreen)
 
         let bringDown = NSMenuItem(title: L("Bring the line down"), action: nil, keyEquivalent: "")
         let options = NSMenu()

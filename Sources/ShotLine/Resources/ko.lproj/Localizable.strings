@@ -47,6 +47,8 @@
 "Over full screen apps" = "전체 화면 앱 위에서도";
 "Hang copied images" = "복사한 이미지 걸기";
 "Images you copy hang on the line too" = "복사한 이미지도 빨랫줄에 걸려요";
+"Hang screenshots on the main display" = "스크린샷을 주 디스플레이에 걸기";
+"Screenshots taken on another display hang where the menu bar is" = "다른 디스플레이에서 찍은 스크린샷도 메뉴 막대가 있는 화면에 걸려요";
 "ShotLine, hanging copied images" = "ShotLine, 복사한 이미지 거는 중";
 
 /* GrabArea */

@@ -47,6 +47,8 @@
 "Over full screen apps" = "フルスクリーンのアプリの上にも";
 "Hang copied images" = "コピーした画像を吊るす";
 "Images you copy hang on the line too" = "コピーした画像もロープに吊るされます";
+"Hang screenshots on the main display" = "スクリーンショットをメインディスプレイに吊るす";
+"Screenshots taken on another display hang where the menu bar is" = "ほかのディスプレイで撮ったものもメニューバーのある画面に吊るされます";
 "ShotLine, hanging copied images" = "ShotLine、コピーした画像を吊るしています";
 
 /* GrabArea */

@@ -49,6 +49,8 @@
 "Over full screen apps" = "Tam ekran proqramların üzərində";
 "Hang copied images" = "Kopyalanmış şəkilləri as";
 "Images you copy hang on the line too" = "Kopyaladığınız şəkillər də ipdən asılır";
+"Hang screenshots on the main display" = "Ekran şəkillərini əsas ekrana as";
+"Screenshots taken on another display hang where the menu bar is" = "Başqa ekranda çəkilən şəkillər menyu zolağı olan ekrana asılır";
 "ShotLine, hanging copied images" = "ShotLine, kopyalanmış şəkilləri asır";
 
 /* GrabArea */

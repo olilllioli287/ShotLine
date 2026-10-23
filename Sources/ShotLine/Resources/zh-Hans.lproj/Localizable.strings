@@ -47,6 +47,8 @@
 "Over full screen apps" = "在全屏 App 上";
 "Hang copied images" = "挂上复制的图片";
 "Images you copy hang on the line too" = "复制的图片也会挂上绳";
+"Hang screenshots on the main display" = "截图都挂在主显示器";
+"Screenshots taken on another display hang where the menu bar is" = "在其他显示器截的图也挂到有菜单栏的显示器";
 "ShotLine, hanging copied images" = "ShotLine，正在挂上复制的图片";
 
 /* GrabArea */

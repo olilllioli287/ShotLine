@@ -47,6 +47,8 @@
 "Over full screen apps" = "在全螢幕 App 上";
 "Hang copied images" = "掛上拷貝的圖片";
 "Images you copy hang on the line too" = "拷貝的圖片也會掛上繩";
+"Hang screenshots on the main display" = "截圖都掛在主螢幕";
+"Screenshots taken on another display hang where the menu bar is" = "在其他螢幕截的圖也掛到有選單列的螢幕";
 "ShotLine, hanging copied images" = "ShotLine，正在掛上拷貝的圖片";
 
 /* GrabArea */

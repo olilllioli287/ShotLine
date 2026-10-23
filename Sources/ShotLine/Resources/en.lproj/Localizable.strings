@@ -49,6 +49,8 @@
 "Over full screen apps" = "Over full screen apps";
 "Hang copied images" = "Hang copied images";
 "Images you copy hang on the line too" = "Images you copy hang on the line too";
+"Hang screenshots on the main display" = "Hang screenshots on the main display";
+"Screenshots taken on another display hang where the menu bar is" = "Screenshots taken on another display hang where the menu bar is";
 "ShotLine, hanging copied images" = "ShotLine, hanging copied images";
 
 /* GrabArea */

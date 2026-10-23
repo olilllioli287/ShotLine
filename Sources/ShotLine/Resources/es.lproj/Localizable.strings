@@ -47,6 +47,8 @@
 "Over full screen apps" = "Sobre apps a pantalla completa";
 "Hang copied images" = "Colgar imágenes copiadas";
 "Images you copy hang on the line too" = "Las imágenes que copias también se cuelgan";
+"Hang screenshots on the main display" = "Colgar capturas en la pantalla principal";
+"Screenshots taken on another display hang where the menu bar is" = "Las capturas hechas en otra pantalla se cuelgan donde está la barra de menús";
 "ShotLine, hanging copied images" = "ShotLine, colgando imágenes copiadas";
 
 /* GrabArea */
