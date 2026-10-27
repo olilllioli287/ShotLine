@@ -236,7 +236,7 @@ final class GrabView: NSView, NSDraggingSource {
         GrabView.isDragging = false
         startedDrag = false
         downPoint = nil
-        log.notice("Drag ended with operation \(operation.rawValue, privacy: .public)")
+        log.notice("Drag ended with operation \(operation.rawValue, privacy: .public) at \(Int(screenPoint.x), privacy: .public),\(Int(screenPoint.y), privacy: .public) over \(NSWorkspace.shared.frontmostApplication?.localizedName ?? "?", privacy: .public)")
         // Dropped on the Trash: macOS only tells us, we move the file.
         if operation.contains(.delete) {
             onDragEnd()
@@ -245,10 +245,13 @@ final class GrabView: NSView, NSDraggingSource {
         }
         onDragEnd()
         // Finder finishes a move a moment later. Check again then, so a photo
-        // saved into a folder leaves the line.
+        // saved into a folder leaves the line. Some apps answer move but only
+        // read the file; one still in place by then was sent like a copy.
         if operation.contains(.move) {
-            let done = onDragEnd
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) { done() }
+            let done = onDragEnd, sent = onSent, path = url?.path
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) {
+                if let path, FileManager.default.fileExists(atPath: path) { sent() } else { done() }
+            }
         } else if operation.contains(.copy) {
             onSent()
         }
