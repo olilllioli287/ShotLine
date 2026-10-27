@@ -656,9 +656,23 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     /// mouse while the cursor is over a photo. Everywhere else, clicks go to
     /// whatever is underneath.
     private func updateMousePassThrough(_ mouse: NSPoint) {
-        guard !GrabView.isDragging else { return }
         let local = panel.convertPoint(fromScreen: mouse)
         let flipped = CGPoint(x: local.x, y: panel.frame.height - local.y)
+        if GrabView.isDragging {
+            // A photo being dragged only stays on the line while the pointer
+            // is near it: half its height to the sides and below, nothing
+            // above. Elsewhere the drag goes through to what is under the
+            // line, like an app's tabs just above the photo.
+            let near = line.draggingID.flatMap { line.hitRects[$0] }
+                .map { r in
+                    CGRect(x: r.minX - r.height / 2, y: r.minY,
+                           width: r.width + r.height, height: r.height * 1.5).contains(flipped)
+                } ?? false
+            if panel.ignoresMouseEvents == near {
+                panel.ignoresMouseEvents = !near
+            }
+            return
+        }
         var overPhoto = line.hitRects.values.contains { $0.insetBy(dx: -4, dy: -4).contains(flipped) }
         // A line longer than the screen also takes the band the photos hang
         // in, gaps included, so a swipe anywhere along it moves it.
