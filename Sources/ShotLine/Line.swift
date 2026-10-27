@@ -275,11 +275,7 @@ final class Line: ObservableObject {
             let target = uniqueURL(in: folder, for: url.lastPathComponent)
             try FileManager.default.moveItem(at: url, to: target)
             log.notice("Kept \(url.lastPathComponent, privacy: .public) in \(folder.path, privacy: .public)")
-            // A watcher on that folder, like the one on the Desktop, would
-            // see it arrive and hang it all over again.
-            let path = target.path
-            justKept.insert(path)
-            DispatchQueue.main.asyncAfter(deadline: .now() + 5) { [weak self] in self?.justKept.remove(path) }
+            markJustKept(target)
             return true
         } catch {
             log.error("Could not keep \(url.lastPathComponent, privacy: .public): \(error.localizedDescription, privacy: .public)")
@@ -287,19 +283,50 @@ final class Line: ObservableObject {
         }
     }
 
+    /// A watcher on the keep folder, like the one on the Desktop, would see
+    /// a kept file arrive and hang it all over again.
+    private func markJustKept(_ target: URL) {
+        let path = target.path
+        justKept.insert(path)
+        DispatchQueue.main.asyncAfter(deadline: .now() + 5) { [weak self] in self?.justKept.remove(path) }
+    }
+
+    /// How long a sent capture keeps its path in ShotLine's folder.
+    private static let sentGrace: TimeInterval = 600
+
+    /// Keeps a capture that was dragged into an app without taking it from
+    /// under that app. Discord and other Chromium apps read the dropped file
+    /// only when they upload it, and a file moved by then stalls the upload.
+    /// So the screenshots folder gets a hard link, the same file under a
+    /// second name, and the path in ShotLine's folder goes away later.
+    private func keepSent(_ url: URL) {
+        let folder = Inbox.keepFolder
+        do {
+            try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
+            let target = uniqueURL(in: folder, for: url.lastPathComponent)
+            try FileManager.default.linkItem(at: url, to: target)
+            log.notice("Kept \(url.lastPathComponent, privacy: .public) in \(folder.path, privacy: .public), linked")
+            markJustKept(target)
+            DispatchQueue.main.asyncAfter(deadline: .now() + Self.sentGrace) {
+                try? FileManager.default.removeItem(at: url)
+            }
+        } catch {
+            // Another volume, say: a move is all there is.
+            _ = moveToKeepFolder(url)
+        }
+    }
+
     /// Dragged into an app, which has its copy: the photo vanishes and the
     /// line goes back up at once. A capture's file moves on to the screenshots
-    /// folder a moment later, once the app has read it. A photo being edited
-    /// stays, as with the timer.
+    /// folder, while the app can still read it where it was. A photo being
+    /// edited stays, as with the timer.
     func sent(_ id: UUID) {
         guard !held.contains(id), let item = items.first(where: { $0.id == id && !$0.falling }) else { return }
         let inInbox = isInInbox(id)
         drop(id, quietly: true, falls: false)
         onSent?()
         guard inInbox else { return }
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) { [weak self] in
-            _ = self?.moveToKeepFolder(item.url)
-        }
+        keepSent(item.url)
     }
 
     /// Put away after, from the menu bar: seconds before a capture moves on

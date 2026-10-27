@@ -80,6 +80,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         panel.placeOnScreen()
         updateCapacity()
 
+        Inbox.removeSentLeftovers()
         if Inbox.isEnabled { Inbox.apply() }
         restoreSettingsOnTermination()
         FocusReturn.shared.start()

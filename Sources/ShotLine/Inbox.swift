@@ -55,6 +55,18 @@ enum Inbox {
         return FileManager.default.homeDirectoryForCurrentUser.appendingPathComponent("Desktop", isDirectory: true)
     }
 
+    /// Captures sent to an app stay in this folder for a while as a second
+    /// name of the kept file. Any left when ShotLine quit early go now; a
+    /// file with a single name is still only here and stays.
+    static func removeSentLeftovers() {
+        let fm = FileManager.default
+        let urls = (try? fm.contentsOfDirectory(at: folder, includingPropertiesForKeys: [.linkCountKey],
+                                                options: [.skipsHiddenFiles])) ?? []
+        for url in urls where ((try? url.resourceValues(forKeys: [.linkCountKey]).linkCount) ?? 1) > 1 {
+            try? fm.removeItem(at: url)
+        }
+    }
+
     /// The user's choice, kept across launches.
     static var isEnabled: Bool {
         get { UserDefaults.standard.bool(forKey: enabledKey) }
