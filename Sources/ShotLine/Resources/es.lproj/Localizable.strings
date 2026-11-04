@@ -49,6 +49,8 @@
 "Images you copy hang on the line too" = "Las imágenes que copias también se cuelgan";
 "Hang screenshots on the main display" = "Colgar capturas en la pantalla principal";
 "Screenshots taken on another display hang where the menu bar is" = "Las capturas hechas en otra pantalla se cuelgan donde está la barra de menús";
+"When the main display is in full screen" = "Cuando la pantalla principal está a pantalla completa";
+"Screenshots taken on the main display hang on this display instead" = "Las capturas de la pantalla principal se cuelgan en esta pantalla";
 "ShotLine, hanging copied images" = "ShotLine, colgando imágenes copiadas";
 
 /* GrabArea */

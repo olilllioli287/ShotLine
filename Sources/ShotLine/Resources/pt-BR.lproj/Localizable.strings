@@ -49,6 +49,8 @@
 "Images you copy hang on the line too" = "As imagens que você copia também vão para o varal";
 "Hang screenshots on the main display" = "Pendurar capturas na tela principal";
 "Screenshots taken on another display hang where the menu bar is" = "Capturas feitas em outra tela vão para a tela com a barra de menus";
+"When the main display is in full screen" = "Quando a tela principal está em tela cheia";
+"Screenshots taken on the main display hang on this display instead" = "Capturas da tela principal vão para esta tela";
 "ShotLine, hanging copied images" = "ShotLine, pendurando imagens copiadas";
 
 /* GrabArea */

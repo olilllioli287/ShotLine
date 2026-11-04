@@ -73,6 +73,17 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         set { UserDefaults.standard.set(!newValue, forKey: "capturesFollowScreen") }
     }
 
+    /// The display a capture goes to while the main one is in full screen,
+    /// by name. VX2718-2KPC until another is picked.
+    static var fullScreenFallbackName: String {
+        get { UserDefaults.standard.string(forKey: "fullScreenFallback") ?? "VX2718-2KPC" }
+        set { UserDefaults.standard.set(newValue, forKey: "fullScreenFallback") }
+    }
+
+    static var fullScreenFallback: NSScreen? {
+        NSScreen.screens.dropFirst().first { $0.localizedName == fullScreenFallbackName }
+    }
+
     func applicationDidFinishLaunching(_ notification: Notification) {
         let host = NSHostingView(rootView: LineView(line: line))
         host.sizingOptions = []
@@ -360,9 +371,19 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             NSScreen.screens.first { NSMouseInRect(CGPoint(x: from.midX, y: from.midY), $0.frame, false) }
         }
         // A flight is drawn on the line's screen alone, so a capture sent from
-        // another display to the main one drops in instead.
-        if Self.capturesOnMainScreen, let main = NSScreen.screens.first, screen != main {
+        // another display to the main one drops in instead. While the main
+        // display is in full screen the line could not come down there, so
+        // the capture stays on the screen it was taken on.
+        if Self.capturesOnMainScreen, let main = NSScreen.screens.first, screen != main,
+           !FullScreen.blocksLine(on: main) {
             screen = main
+            from = nil
+        }
+        // A capture taken on the main display while it is in full screen
+        // hangs on the chosen other display, dropping in.
+        if let main = NSScreen.screens.first, (screen ?? LinePanel.screenUnderPointer()) == main,
+           FullScreen.blocksLine(on: main), let other = Self.fullScreenFallback {
+            screen = other
             from = nil
         }
         // Every capture brings the line down before it hangs, on the screen it
@@ -797,6 +818,19 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         mainScreen.state = Self.capturesOnMainScreen ? .on : .off
         mainScreen.toolTip = L("Screenshots taken on another display hang where the menu bar is")
         menu.addItem(mainScreen)
+
+        let fallbackItem = NSMenuItem(title: L("When the main display is in full screen"), action: nil, keyEquivalent: "")
+        let fallbackMenu = NSMenu()
+        let others = NSScreen.screens.dropFirst().map(\.localizedName)
+        for name in Set(others + [Self.fullScreenFallbackName]).sorted() {
+            let item = ClosureMenuItem(name) { AppDelegate.fullScreenFallbackName = name }
+            item.state = name == Self.fullScreenFallbackName ? .on : .off
+            if !others.contains(name) { item.isEnabled = false }
+            fallbackMenu.addItem(item)
+        }
+        fallbackItem.submenu = fallbackMenu
+        fallbackItem.toolTip = L("Screenshots taken on the main display hang on this display instead")
+        menu.addItem(fallbackItem)
 
         let bringDown = NSMenuItem(title: L("Bring the line down"), action: nil, keyEquivalent: "")
         let options = NSMenu()

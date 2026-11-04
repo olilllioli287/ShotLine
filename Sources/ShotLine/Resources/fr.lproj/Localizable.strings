@@ -49,6 +49,8 @@
 "Images you copy hang on the line too" = "Les images copiées s’accrochent aussi à la corde";
 "Hang screenshots on the main display" = "Accrocher les captures sur l’écran principal";
 "Screenshots taken on another display hang where the menu bar is" = "Les captures prises sur un autre écran s’accrochent là où se trouve la barre des menus";
+"When the main display is in full screen" = "Quand l’écran principal est en plein écran";
+"Screenshots taken on the main display hang on this display instead" = "Les captures de l’écran principal s’accrochent sur cet écran";
 "ShotLine, hanging copied images" = "ShotLine, accroche les images copiées";
 
 /* GrabArea */
