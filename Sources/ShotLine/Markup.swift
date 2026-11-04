@@ -24,6 +24,9 @@ final class Markup: NSObject, NSSharingServiceDelegate {
     private static let toolbarHeight: CGFloat = 48
     /// Markup's windows while they wait invisible for the photo.
     private var hidden: [NSWindow] = []
+    /// Blur and shadow left on another screen: macOS will not move a window
+    /// that covers one screen onto another, so they stay invisible.
+    private var stranded: [NSWindow] = []
     /// Where Markup's image sits on screen.
     private var imageArea: CGRect?
     /// The editor itself, watched for the moment it starts to close.
@@ -91,6 +94,12 @@ final class Markup: NSObject, NSSharingServiceDelegate {
                     w.setFrameOrigin(NSPoint(x: w.frame.minX + dx, y: w.frame.minY + dy))
                 }
             }
+            // Opened on another screen (an iPad above, say), the blur stays
+            // behind there: keep it out of sight rather than dim that screen.
+            if let target = (screen ?? window.screen)?.frame {
+                self.stranded = added.filter { $0 !== window && !$0.frame.intersects(target) }
+                for w in self.stranded { w.alphaValue = 0 }
+            }
             var image = window.frame
             image.size.height -= Self.toolbarHeight
             self.imageArea = image
@@ -113,7 +122,9 @@ final class Markup: NSObject, NSSharingServiceDelegate {
         editor?.alphaValue = 1
         NSAnimationContext.runAnimationGroup { ctx in
             ctx.duration = 0.12
-            for w in windows where w !== editor { w.animator().alphaValue = 1 }
+            for w in windows where w !== editor && !stranded.contains(where: { $0 === w }) {
+                w.animator().alphaValue = 1
+            }
         }
         watchForClose()
     }
@@ -148,6 +159,7 @@ final class Markup: NSObject, NSSharingServiceDelegate {
         closeWatch = nil
         let area = reportedClosing ? nil : imageArea
         imageArea = nil
+        stranded = []
         reportedClosing = false
         show()
         onEnded(target, area)
