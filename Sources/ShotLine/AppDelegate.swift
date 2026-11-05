@@ -25,6 +25,17 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     private var mouseTimer: Timer?
     private var inboxTimer: Timer?
 
+    /// 目前已經「套用」到執行中程式的設定。Hub 面板直接改 defaults 後，
+    /// reloadFromHub 拿它跟新值比，有變的才做選單改設定時會做的事。
+    private struct HubApplied {
+        var inbox: Bool
+        var clipboard: Bool
+        var size: Layout.Size
+        var keep: Int?
+        var delay: TimeInterval?
+    }
+    private var hubApplied = HubApplied(inbox: false, clipboard: false, size: .medium, keep: nil, delay: 15)
+
     /// Whether the panel is ordered in. It can be in and still tucked away
     /// above the top edge, like an auto-hiding Dock.
     private var isPresent = false
@@ -103,6 +114,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         registerShortcut()
 
         setUpStatusItem()
+        hubApplied = HubApplied(inbox: Inbox.isEnabled, clipboard: ClipboardWatcher.isEnabled,
+                                size: Layout.size, keep: Line.keepOnLine, delay: Line.keepDelay)
+        // Hub 集合面板：藏圖示、叫出選單、面板改了設定就重讀
+        HubLink.install(statusItem: { [weak self] in self?.statusItem }, reload: { [weak self] in self?.reloadFromHub() })
         watchMenuBarClicks()
 
         Markup.shared.onSaved = { [weak self] url in
@@ -291,6 +306,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
 
     private func setInbox(_ on: Bool) {
         Inbox.isEnabled = on
+        hubApplied.inbox = on
         if on { Inbox.apply() } else { Inbox.restore() }
         startWatcher()
     }
@@ -312,6 +328,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     /// Watching the clipboard is opt in, from the menu bar only.
     private func setClipboard(_ on: Bool) {
         ClipboardWatcher.isEnabled = on
+        hubApplied.clipboard = on
         if on { clipboardWatcher.start() } else { clipboardWatcher.stop() }
         updateStatusIcon()
     }
@@ -734,9 +751,52 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         }
     }
 
+    /// Hub 面板改了設定：重讀 defaults，有變的項目照選單的做法套用。
+    /// 其餘（主螢幕、停在選單列、有新內容掛上、聲音、全螢幕備用螢幕）每次用到才讀，不用另外處理。
+    private func reloadFromHub() {
+        CFPreferencesAppSynchronize(kCFPreferencesCurrentApplication)
+        let inbox = Inbox.isEnabled
+        if inbox != hubApplied.inbox {
+            hubApplied.inbox = inbox
+            if inbox { Inbox.apply() } else { Inbox.restore() }
+            startWatcher()
+        }
+        let clipboard = ClipboardWatcher.isEnabled
+        if clipboard != hubApplied.clipboard {
+            hubApplied.clipboard = clipboard
+            if clipboard { clipboardWatcher.start() } else { clipboardWatcher.stop() }
+        }
+        updateStatusIcon()
+        let size = Layout.size
+        if size != hubApplied.size {
+            hubApplied.size = size
+            panel.placeOnScreen(panel.screen)
+            updateCapacity()
+            line.reloadThumbnails()
+        }
+        let keep = Line.keepOnLine
+        if keep != hubApplied.keep {
+            hubApplied.keep = keep
+            updateCapacity()
+            line.trim()
+        }
+        let delay = Line.keepDelay
+        if delay != hubApplied.delay {
+            hubApplied.delay = delay
+            line.restartKeepTimers()
+        }
+        refresh()   // 「在全螢幕 App 上」等會影響繩子該不該出現
+    }
+
+    func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows flag: Bool) -> Bool {
+        HubLink.reopen()
+        return true
+    }
+
     private func setKeep(_ n: Int?) {
         guard n != Line.keepOnLine else { return }
         Line.keepOnLine = n
+        hubApplied.keep = n
         updateCapacity()
         line.trim()
     }
@@ -744,6 +804,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     private func setSize(_ size: Layout.Size) {
         guard size != Layout.size else { return }
         Layout.size = size
+        hubApplied.size = size
         panel.placeOnScreen(panel.screen)
         updateCapacity()
         line.reloadThumbnails()
@@ -904,6 +965,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         for (delay, title) in choices {
             let item = ClosureMenuItem(title) { [weak self] in
                 Line.keepDelay = delay
+                self?.hubApplied.delay = delay
                 self?.line.restartKeepTimers()
             }
             item.state = Line.keepDelay == delay ? .on : .off
