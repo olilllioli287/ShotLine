@@ -243,7 +243,18 @@ final class Line: ObservableObject {
     func trim() {
         while liveCount > maxItems, letGoOldest() {}
         scroll = 0
+        // 全部都在忙時繩子會暫時超過上限，過一會兒再補跑一次
+        if liveCount > maxItems, !trimRetryScheduled {
+            trimRetryScheduled = true
+            DispatchQueue.main.asyncAfter(deadline: .now() + 2) { [weak self] in
+                guard let self else { return }
+                self.trimRetryScheduled = false
+                self.trim()
+            }
+        }
     }
+
+    private var trimRetryScheduled = false
 
     /// A capture in ShotLine's folder is kept rather than trashed, so a full
     /// line never throws away a screenshot, edited or not.
@@ -258,7 +269,8 @@ final class Line: ObservableObject {
     private func letGoOldest() -> Bool {
         for item in items where !item.falling {
             // 正在 Markup 標示或剪裁的照片不能被搬走，會讓編輯器存不了檔
-            if Markup.shared.isEditing(item.url) || Trim.shared.isEditing(item.url) { continue }
+            // 也跳過被外部程式開著的、正在拖曳／按住／QuickLook 的照片
+            if isBusy(item) || held.contains(item.id) { continue }
             if letGo(item.id) { return true }
         }
         return false
