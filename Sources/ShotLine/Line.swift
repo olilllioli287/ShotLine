@@ -92,9 +92,7 @@ final class Line: ObservableObject {
         // A full line lets the oldest photo fall off the far end. Only one: a
         // line hung on a wider screen keeps its length here instead of losing
         // several photos to a single capture.
-        if liveCount > maxItems, let oldest = items.first(where: { !$0.falling }) {
-            letGo(oldest.id)
-        }
+        if liveCount > maxItems { _ = letGoOldest() }
         save()
         if !quietly { play("Tink", volume: 0.35) }
         if isInInbox(item.id) { scheduleKeep(item.id) }
@@ -243,29 +241,40 @@ final class Line: ObservableObject {
     /// After Keep on line is lowered, the oldest photos past it go the way
     /// of a full line.
     func trim() {
-        while liveCount > maxItems, let oldest = items.first(where: { !$0.falling }) {
-            letGo(oldest.id)
-        }
+        while liveCount > maxItems, letGoOldest() {}
         scroll = 0
     }
 
     /// A capture in ShotLine's folder is kept rather than trashed, so a full
     /// line never throws away a screenshot, edited or not.
-    private func letGo(_ id: UUID) {
-        if isInInbox(id) { keep(id, quietly: true) }
+    private func letGo(_ id: UUID) -> Bool {
+        if isInInbox(id), !keep(id, quietly: true) { return false }   // 搬不走就留在繩上，不能讓檔案掉出繩子
         drop(id, quietly: true)
+        return true
+    }
+
+    /// Lets the oldest photo go; one that cannot be kept stays and the next
+    /// oldest is tried. False when none could go.
+    private func letGoOldest() -> Bool {
+        for item in items where !item.falling {
+            if letGo(item.id) { return true }
+        }
+        return false
     }
 
     /// Inbox mode: keep a capture by moving it to the screenshots folder
     /// macOS used before. The corner checkmark does it at once, and every
     /// capture does it by itself `keepDelay` seconds after it was hung.
-    func keep(_ id: UUID, quietly: Bool = false) {
-        guard let item = items.first(where: { $0.id == id && !$0.falling }) else { return }
+    @discardableResult
+    func keep(_ id: UUID, quietly: Bool = false) -> Bool {
+        guard let item = items.first(where: { $0.id == id && !$0.falling }) else { return false }
         if moveToKeepFolder(item.url) {
             drop(id, quietly: true)
+            return true
         } else if !quietly {
             NSSound.beep()
         }
+        return false
     }
 
     private func moveToKeepFolder(_ url: URL) -> Bool {
