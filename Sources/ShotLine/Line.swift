@@ -257,6 +257,8 @@ final class Line: ObservableObject {
     /// oldest is tried. False when none could go.
     private func letGoOldest() -> Bool {
         for item in items where !item.falling {
+            // 正在 Markup 標示或剪裁的照片不能被搬走，會讓編輯器存不了檔
+            if Markup.shared.isEditing(item.url) || Trim.shared.isEditing(item.url) { continue }
             if letGo(item.id) { return true }
         }
         return false
