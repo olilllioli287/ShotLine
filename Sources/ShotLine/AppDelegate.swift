@@ -266,18 +266,22 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     /// folder, few enough that screenshots still have room on the line.
     static let maxExtraFolders = 3
 
-    /// The folders from "Also watch folders" that still exist. New images in
-    /// them hang like screenshots; taking one down leaves the file there.
+    /// The saved paths exactly as the user added them. An unplugged external
+    /// drive stays in the list, so its setting survives until it is back;
+    /// only reads for watching are filtered, never what gets written.
+    static var extraFolderPaths: [String] {
+        get { UserDefaults.standard.stringArray(forKey: "extraFolders") ?? [] }
+        set { UserDefaults.standard.set(newValue, forKey: "extraFolders") }
+    }
+
+    /// The folders from "Also watch folders" that exist right now. New images
+    /// in them hang like screenshots; taking one down leaves the file there.
     static var extraFolders: [URL] {
-        get {
-            let paths = UserDefaults.standard.stringArray(forKey: "extraFolders") ?? []
-            return paths.compactMap { path in
-                var isDir: ObjCBool = false
-                guard FileManager.default.fileExists(atPath: path, isDirectory: &isDir), isDir.boolValue else { return nil }
-                return URL(fileURLWithPath: path, isDirectory: true)
-            }
+        extraFolderPaths.compactMap { path in
+            var isDir: ObjCBool = false
+            guard FileManager.default.fileExists(atPath: path, isDirectory: &isDir), isDir.boolValue else { return nil }
+            return URL(fileURLWithPath: path, isDirectory: true)
         }
-        set { UserDefaults.standard.set(newValue.map(\.path), forKey: "extraFolders") }
     }
 
     private func chooseExtraFolder() {
@@ -288,9 +292,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         panel.prompt = L("Watch")
         panel.message = L("New images saved to this folder will hang on the line.")
         NSApp.activate(ignoringOtherApps: true)
-        guard panel.runModal() == .OK, let url = panel.url, Self.extraFolders.count < Self.maxExtraFolders,
-              !Self.extraFolders.contains(where: { $0.standardizedFileURL == url.standardizedFileURL }) else { return }
-        Self.extraFolders.append(url)
+        guard panel.runModal() == .OK, let url = panel.url, Self.extraFolderPaths.count < Self.maxExtraFolders,
+              !Self.extraFolderPaths.contains(where: { URL(fileURLWithPath: $0).standardizedFileURL == url.standardizedFileURL }) else { return }
+        Self.extraFolderPaths.append(url.path)
         startWatcher()
     }
 
@@ -917,7 +921,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         let folderItem = NSMenuItem(title: L("Also watch folders"), action: nil, keyEquivalent: "")
         let folderMenu = NSMenu()
         folderMenu.autoenablesItems = false
-        let folders = Self.extraFolders
+        let folders = Self.extraFolderPaths.map { URL(fileURLWithPath: $0, isDirectory: true) }
         for folder in folders {
             let item = ClosureMenuItem(FileManager.default.displayName(atPath: folder.path)) {
                 NSWorkspace.shared.open(folder)
@@ -934,7 +938,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             let stopMenu = NSMenu()
             for folder in folders {
                 stopMenu.addItem(ClosureMenuItem(FileManager.default.displayName(atPath: folder.path)) { [weak self] in
-                    AppDelegate.extraFolders.removeAll { $0.standardizedFileURL == folder.standardizedFileURL }
+                    AppDelegate.extraFolderPaths.removeAll { URL(fileURLWithPath: $0).standardizedFileURL == folder.standardizedFileURL }
                     self?.startWatcher()
                 })
             }
