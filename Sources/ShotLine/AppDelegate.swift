@@ -1052,6 +1052,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
 
     override func endPreviewPanelControl(_ panel: QLPreviewPanel!) {
         QuickLook.shared.release(panel)
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) { [weak self] in self?.line.trimIfOver() }
     }
 
 }

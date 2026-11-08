@@ -35,8 +35,12 @@ final class Line: ObservableObject {
     @Published private(set) var items: [Pegged] = []
     @Published private(set) var gust = 0
     @Published var copiedID: UUID?
-    @Published var draggingID: UUID?
-    @Published var pressedID: UUID?
+    @Published var draggingID: UUID? {
+        didSet { if draggingID == nil, oldValue != nil { trimIfOver() } }
+    }
+    @Published var pressedID: UUID? {
+        didSet { if pressedID == nil, oldValue != nil { trimIfOver() } }
+    }
     /// Whether the line has slid down into view.
     @Published var revealed = false
 
@@ -244,9 +248,11 @@ final class Line: ObservableObject {
         while liveCount > maxItems, letGoOldest() {}
         scroll = 0
         // 全部都在忙時繩子會暫時超過上限，過一會兒再補跑一次
+        // 不再每 2 秒輪詢：忙碌結束的地方（拖曳／按住／滑鼠離開／選單／編輯器／QuickLook）會呼叫 trimIfOver，
+        // 這裡只留一個 30 秒的保底
         if liveCount > maxItems, !trimRetryScheduled {
             trimRetryScheduled = true
-            DispatchQueue.main.asyncAfter(deadline: .now() + 2) { [weak self] in
+            DispatchQueue.main.asyncAfter(deadline: .now() + 30) { [weak self] in
                 guard let self else { return }
                 self.trimRetryScheduled = false
                 self.trim()
@@ -255,6 +261,16 @@ final class Line: ObservableObject {
     }
 
     private var trimRetryScheduled = false
+
+    /// 某個「忙碌」狀態剛結束時呼叫：繩子超過上限才補整理。
+    /// 晚一個 runloop 再跑，等忙碌旗標（例如 GrabView.isDragging）都已經放掉
+    func trimIfOver() {
+        guard liveCount > maxItems else { return }
+        DispatchQueue.main.async { [weak self] in
+            guard let self, self.liveCount > self.maxItems else { return }
+            self.trim()
+        }
+    }
 
     /// A capture in ShotLine's folder is kept rather than trashed, so a full
     /// line never throws away a screenshot, edited or not.
@@ -366,7 +382,9 @@ final class Line: ObservableObject {
     }
 
     /// The photo the pointer is over. Not published: only the timer reads it.
-    var hoveredID: UUID?
+    var hoveredID: UUID? {
+        didSet { if hoveredID == nil, oldValue != nil { trimIfOver() } }
+    }
 
     /// The timer each capture is waiting on. A new timer replaces the old
     /// one, and one that no longer matches does nothing when it fires.
@@ -487,6 +505,7 @@ final class Line: ObservableObject {
         } else {
             reloadThumbnail(for: url)
         }
+        trimIfOver()
     }
 
     /// The photo hangs again, showing any edit, flying back from the editor

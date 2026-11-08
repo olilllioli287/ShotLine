@@ -45,6 +45,7 @@ struct GrabArea: NSViewRepresentable {
         view.hasCheck = line.isInInbox(id)
         view.onKeep = { line.keep(id) }
         view.onLongPress = { line.copy(id) }
+        view.onMenuClosed = { line.trimIfOver() }
         view.onForceClick = { line.quickLook(id) }
         view.onPressChange = { pressed in line.pressedID = pressed ? id : nil }
         view.menuProvider = {
@@ -84,6 +85,8 @@ final class GrabView: NSView, NSDraggingSource {
     static var isDragging = false
     /// A photo's menu is open. It reaches past the line, so the line waits.
     static var isShowingMenu = false
+    /// 右鍵選單關閉後（讓繩子補做被選單擋住的整理）
+    var onMenuClosed: (() -> Void)?
 
     var url: URL?
     var dragImage: NSImage?
@@ -221,6 +224,7 @@ final class GrabView: NSView, NSDraggingSource {
         GrabView.isShowingMenu = true
         NSMenu.popUpContextMenu(menuProvider(), with: event, for: self)
         GrabView.isShowingMenu = false
+        onMenuClosed?()
     }
 
     // MARK: NSDraggingSource
