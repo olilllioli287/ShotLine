@@ -245,8 +245,16 @@ final class Line: ObservableObject {
     /// After Keep on line is lowered, the oldest photos past it go the way
     /// of a full line.
     func trim() {
+        let before = items.count
         while liveCount > maxItems, letGoOldest() {}
-        scroll = 0
+        // 只有真的移掉東西、且使用者本來就在開頭時才歸零；否則維持原位置（夾在合法範圍內）
+        if items.count != before, scroll == 0 {
+            scroll = 0
+        } else {
+            let most = CGFloat(max(0, items.count - visibleCount)) * Layout.spacing
+            let clamped = min(most, max(0, scroll))
+            if clamped != scroll { scroll = clamped }
+        }
         // 全部都在忙時繩子會暫時超過上限，過一會兒再補跑一次
         // 不再每 2 秒輪詢：忙碌結束的地方（拖曳／按住／滑鼠離開／選單／編輯器／QuickLook）會呼叫 trimIfOver，
         // 這裡只留一個 30 秒的保底

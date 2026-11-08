@@ -107,6 +107,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         restoreSettingsOnTermination()
         FocusReturn.shared.start()
         startWatcher()
+        observeVolumes()
         watchScreenshotSettings()
         clipboardWatcher = ClipboardWatcher { [weak self] url in self?.hangCapture(url) }
         if ClipboardWatcher.isEnabled { clipboardWatcher.start() }
@@ -250,6 +251,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         }
         folderWatchers.forEach { $0.stop() }
         folderWatchers = []
+        watchedExtraPaths = Self.extraFolders.map { $0.path }
         // A folder may also be watched for screenshots, like the Desktop; an
         // image both report hangs once.
         for folder in Self.extraFolders {
@@ -259,6 +261,31 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
                 onChange: { [weak self] in self?.line.prune() })
             extra.start()
             folderWatchers.append(extra)
+        }
+    }
+
+    /// The extra folders that existed when watchers were last built.
+    private var watchedExtraPaths: [String] = []
+    private var remountPending = false
+
+    /// An external drive coming or going: rebuild the watchers once, and only
+    /// if the set of folders that exist actually changed (mount events come in bursts).
+    private func observeVolumes() {
+        let nc = NSWorkspace.shared.notificationCenter
+        for name in [NSWorkspace.didMountNotification, NSWorkspace.didUnmountNotification] {
+            nc.addObserver(forName: name, object: nil, queue: .main) { [weak self] _ in
+                MainActor.assumeIsolated { self?.volumesChanged() }
+            }
+        }
+    }
+
+    private func volumesChanged() {
+        guard !Self.extraFolderPaths.isEmpty, !remountPending else { return }
+        remountPending = true
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) { [weak self] in
+            guard let self else { return }
+            self.remountPending = false
+            if Self.extraFolders.map({ $0.path }) != self.watchedExtraPaths { self.startWatcher() }
         }
     }
 
